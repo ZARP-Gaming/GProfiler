@@ -320,6 +320,8 @@ else
 		local lines = {}
 		for i = start, endd do table.insert(lines, f:ReadLine() or "") end
 
+		f:Close()
+
 		return lines
 	end
 end
