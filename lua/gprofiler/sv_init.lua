@@ -13,6 +13,8 @@ hook.Add("PlayerInitialSpawn", "GProfiler.SendState", function(ply)
 		end
 	end
 
+	if table.IsEmpty(Active) then return end
+
 	net.Start("GProfiler.SendState")
 	net.WriteUInt(table.Count(Active), 4)
 	for profiler, time in pairs(Active) do
