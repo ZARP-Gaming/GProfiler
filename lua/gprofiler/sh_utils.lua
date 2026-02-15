@@ -12,7 +12,6 @@ if CLIENT then
 	local surface = surface
 
 	local function PaintColumn(s, w, h)
-		if k == columnCount then return end
 		surface.SetDrawColor(BorderColor.r, BorderColor.g, BorderColor.b, BorderColor.a)
 		surface.DrawRect(w - 2, 0, 2, h)
 	end
