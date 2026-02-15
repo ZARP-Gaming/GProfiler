@@ -1,5 +1,4 @@
 GProfiler.Version = "1.9.1"
-GProfiler.Config.VersionCheck = true -- Should we check for updates?
 
 -- Available languages: english, french, german, dutch, russian, italian, turkish
 -- Some languages may only have partial support.
@@ -71,16 +70,4 @@ if CLIENT then
 		Console = 'gprofiler', -- False to disable
 		Closekey = KEY_F4 -- False to disable
 	}
-else
-	local URL = "https://fastdl.zarpgaming.com/callum/gprofiler/version.txt"
-	if GProfiler.Config.VersionCheck then
-		hook.Add("PlayerInitialSpawn", "GProfiler_VersionCheck", function()
-			http.Fetch(URL, function(body, _, __, code)
-				if code == 200 and body ~= GProfiler.Version then
-					GProfiler.Log(string.format("You are running an outdated version of GProfiler! (Current: %s, Latest: %s)", GProfiler.Version, body), 3)
-				end
-			end)
-			hook.Remove("PlayerInitialSpawn", "GProfiler_VersionCheck")
-		end)
-	end
 end
