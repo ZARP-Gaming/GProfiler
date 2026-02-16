@@ -17,6 +17,7 @@ function BaseProvider:New()
 end
 
 function BaseProvider:IsAvailable()
+	if not self.ModuleName or self.ModuleName == "" then return true end
 	return util.IsBinaryModuleInstalled(self.ModuleName)
 end
 
@@ -25,7 +26,10 @@ function BaseProvider:Initialize()
 		return false
 	end
 
-	require(self.ModuleName)
+	if self.ModuleName and self.ModuleName ~= "" then
+		require(self.ModuleName)
+	end
+
 	self:SetupConnectionHook()
 	return true
 end

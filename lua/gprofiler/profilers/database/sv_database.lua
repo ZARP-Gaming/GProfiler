@@ -9,6 +9,13 @@ GProfiler.Database.QueryIdCounter = GProfiler.Database.QueryIdCounter or 0
 local ProviderLoader = include("providers/base/sv_provider_loader.lua")
 local availableProviders = ProviderLoader.Initialize()
 
+local IDLookup = {
+	["mysqloo"] = 1,
+	["tmysql4"] = 2,
+	["goobie_mysql"] = 3,
+	["sqlite"] = 4
+}
+
 -- TODO: Express Networking Support!
 
 function GProfiler.Database:StartProfiler(ply)
@@ -80,7 +87,7 @@ function GProfiler.Database:StopProfiler(ply)
 						end
 					end
 					net.WriteUInt(k, 14)
-					net.WriteUInt(v.Type == "mysqloo" and 1 or v.Type == "tmysql4" and 2 or v.Type == "goobie_mysql" and 3 or 0, 2)
+					net.WriteUInt(IDLookup[v.Type] or 0, 3)
 					net.WriteUInt(v.Count, 14)
 					net.WriteFloat(v.Time)
 					net.WriteFloat(internalData and internalData.Duration or v.AverageTime)

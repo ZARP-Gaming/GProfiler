@@ -667,6 +667,13 @@ net.Receive("GProfiler_Database_ServerProfileStatus", function()
 	end
 end)
 
+local TypeLookup = {
+	[1] = "mysqloo",
+	[2] = "tmysql4",
+	[3] = "goobie_mysql",
+	[4] = "sqlite"
+}
+
 net.Receive("GProfiler_Database_SendData", function()
 	local isFirstChunk = net.ReadBool()
 	local isLastChunk = net.ReadBool()
@@ -680,9 +687,9 @@ net.Receive("GProfiler_Database_SendData", function()
 	local count = net.ReadUInt(14)
 	for i = 1, count do
 		local id = net.ReadUInt(14)
-		local typeId = net.ReadUInt(2)
+		local typeId = net.ReadUInt(3)
 		GProfiler.Database.ProfileData[id] = {
-			Type = typeId == 1 and "mysqloo" or typeId == 2 and "tmysql4" or typeId == 3 and "goobie_mysql" or "unknown",
+			Type = TypeLookup[typeId] or "unknown",
 			Count = net.ReadUInt(14),
 			Time = net.ReadFloat(),
 			AverageTime = net.ReadFloat(),
