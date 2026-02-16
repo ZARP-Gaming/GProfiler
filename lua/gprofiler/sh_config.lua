@@ -1,4 +1,4 @@
-GProfiler.Version = "1.9.1"
+GProfiler.Version = "1.9.2"
 
 -- Available languages: english, french, german, dutch, russian, italian, turkish
 -- Some languages may only have partial support.
