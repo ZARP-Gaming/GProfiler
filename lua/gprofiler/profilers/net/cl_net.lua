@@ -442,7 +442,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 					PopulateBreakdown(name, breakdownData.Children or {}, data.Size or data[7] or 0)
 				end
 			else
-				net.Start("GProfiler_Net_RequestServerBreakdown")
+				net.Start("GProfiler_Net_RequestBreakdown")
 				net.WriteString(name)
 				net.SendToServer()
 			end
@@ -636,7 +636,8 @@ function GProfiler.Net.DoTab(Base, Outer)
 	net.SendToServer()
 end
 GProfiler.Menu.RegisterTab("Networking", "gprofiler/network.png", 2, GProfiler.Net.DoTab, function()
-	return "00:00", true
+	if Net.StartTime == 0 then return end
+	return GProfiler.TimeRunning(Net.StartTime, Net.EndTime, Net.ProfileActive), Net.ProfileActive
 end)
 
 net.Receive("GProfiler_Net_SendData", function()

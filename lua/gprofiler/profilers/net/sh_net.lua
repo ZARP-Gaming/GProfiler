@@ -368,7 +368,7 @@ if SERVER then
 			end)
 		end)
 	else
-		net.Receive("gprofiler_nettest", function()
-			print("got net test")
+		net.Receive("gprofiler_nettest", function(len)
+			print("got net test", len)
 		end)
 	end
