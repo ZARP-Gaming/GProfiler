@@ -1,34 +1,26 @@
-GProfiler.Menu.Tabs = GProfiler.Menu.Tabs or {}
-GProfiler.Menu.Background = GProfiler.Menu.Background or nil
-GProfiler.Menu.Content = GProfiler.Menu.Content or nil
-GProfiler.Menu.LastTab = GProfiler.Menu.LastTab or 1
+GProfiler.Menu = GProfiler.Menu or {}
+local Menu = GProfiler.Menu
+Menu.Tabs = Menu.Tabs or {}
+Menu.Background = Menu.Background or nil
+Menu.Content = Menu.Content or nil
+Menu.LastTab = Menu.LastTab or 1
 
-local MenuColors = GProfiler.MenuColors
-
-local function GetTabName(tabName)
-	return GProfiler.Language.GetPhrase(string.format("tab_%s", string.gsub(string.lower(tabName), " ", "_")))
+local CachedSizes = {}
+function GProfiler.GetScaledSize(s)
+	if CachedSizes[s] then return CachedSizes[s] end
+	local scalingFactor = math.min(ScrW() / 3840, ScrH() / 2160)
+	CachedSizes[s] = s * scalingFactor
+	return s * scalingFactor
 end
 
-local function formatTime(seconds)
-	local days = math.floor(seconds / 86400)
-	if days > 0 then
-		local hours = math.floor((seconds - days * 86400) / 3600)
-		local minutes = math.floor((seconds - days * 86400 - hours * 3600) / 60)
-		local seconds = math.floor(seconds - days * 86400 - hours * 3600 - minutes * 60)
-		return string.format("%dd %02d:%02d:%02d", days, hours, minutes, seconds)
-	else
-		local hours = math.floor(seconds / 3600)
-		local minutes = math.floor((seconds - hours * 3600) / 60)
-		local seconds = math.floor(seconds - hours * 3600 - minutes * 60)
-		return string.format("%02d:%02d:%02d", hours, minutes, seconds)
-	end
-end
+local function GetTabName(tabName) return GProfiler.Language.GetPhrase(string.format("tab_%s", string.gsub(string.lower(tabName), " ", "_"))) end
 
 function GProfiler.Menu:Open()
 	if not GProfiler.Access.HasAccess(LocalPlayer()) then return end
 	if IsValid(GProfiler.Menu.Background) then GProfiler.Menu.Background:Remove() end
 
-	local SColor = MenuColors.HeaderSeparator
+	local MenuColors = GProfiler.MenuColors
+	local RNDX = GProfiler.RNDX
 
 	local MenuBackground = vgui.Create("DFrame")
 	MenuBackground:SetSize(ScrW(), ScrH())
@@ -38,7 +30,10 @@ function GProfiler.Menu:Open()
 	MenuBackground:SetTitle("")
 	MenuBackground:MakePopup()
 	MenuBackground:SetMouseInputEnabled(false)
-	MenuBackground.Paint = function(s) Derma_DrawBackgroundBlur(s) end
+	MenuBackground.Paint = function(s, w, h)
+		-- RNDX.DrawBlur(0, 0, w, h, nil, nil, nil, nil, nil, (ScrW() - (ScrW() * 0.79)) / 2)
+		RNDX.Draw(4, 0, 0, w, h, Color(0, 0, 0, 100)) -- better than eating fps
+	end
 	if GProfiler.Config.MenuCommands.Closekey then
 		MenuBackground.Think = function(s)
 			if input.IsKeyDown(GProfiler.Config.MenuCommands.Closekey) then
@@ -48,197 +43,152 @@ function GProfiler.Menu:Open()
 	end
 	GProfiler.Menu.Background = MenuBackground
 
-	local Menu = vgui.Create("DFrame", MenuBackground)
-	Menu:SetSize(ScrW() * 0.8, ScrH() * 0.8)
-	Menu:Center()
-	Menu:SetDraggable(false)
-	Menu:ShowCloseButton(false)
-	Menu:SetTitle("")
-	Menu:MakePopup()
-	Menu.Paint = function(s, w, h) draw.RoundedBox(4, 0, 0, w, h, MenuColors.Background) end
-	Menu.OnClose = function() MenuBackground:Remove() end
+	local Main = vgui.Create("DFrame", MenuBackground)
+	Main:SetSize(ScrW() * 0.8, ScrH() * 0.8)
+	Main:Center()
+	Main:SetDraggable(false)
+	Main:ShowCloseButton(false)
+	Main:SetTitle("")
+	Main:MakePopup()
+	Main.Paint = function(s, w, h) RNDX.Draw(4, 0, 0, w, h, Color(10, 32, 55, 255)) end
+	Main.OnClose = function() MenuBackground:Remove() end
 
-	local MenuTopBar = vgui.Create("DPanel", Menu)
-	MenuTopBar:SetSize(Menu:GetWide(), 40)
-	MenuTopBar:SetPos(0, 0)
-	MenuTopBar.Paint = function(s, w, h)
-		draw.RoundedBoxEx(4, 0, 0, w, h, MenuColors.OpaqueBlack, true, true, false, false)
-		surface.SetDrawColor(SColor.r, SColor.g, SColor.b, SColor.a)
-		surface.DrawLine(0, h - 1, w, h - 1)
+	local Header = vgui.Create("DPanel", Main)
+	Header:SetSize(Main:GetWide() - GProfiler.GetScaledSize(20), GProfiler.GetScaledSize(92))
+	Header:SetPos(GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(10))
+	Header.Paint = function(s, w, h)
+		RNDX.Draw(4, 0, 0, w, h, Color(24, 45, 67, 255))
+
+		surface.SetFont("GProfiler.HeaderTitle")
+		local TitleWidth, TitleHeight = surface.GetTextSize("GProfiler")
+		local StartX = GProfiler.GetScaledSize(20)
+
+		draw.SimpleText("GProfiler", "GProfiler.HeaderTitle", StartX, h / 2, Color(191, 237, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText("v" .. GProfiler.Version, "GProfiler.HeaderSubtitle", StartX + 5 + TitleWidth, h / 2 + GProfiler.GetScaledSize(10), Color(210, 210, 210), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	end
 
-	local MenuTitle = vgui.Create("DLabel", MenuTopBar)
-	MenuTitle:SetSize(MenuTopBar:GetWide(), MenuTopBar:GetTall())
-	MenuTitle:SetPos(0, 0)
-	MenuTitle:SetFont("GProfiler.Menu.Title")
-	MenuTitle:SetTextColor(MenuColors.White)
-	MenuTitle:SetText("GProfiler")
-	MenuTitle:SizeToContents()
-	MenuTitle:SetPos(5, MenuTopBar:GetTall() / 2 - MenuTitle:GetTall() / 2)
-
-	GProfiler.Menu.Title = MenuTitle
-
-	local LeftSideBar = vgui.Create("DPanel", Menu)
-	LeftSideBar:SetSize(250, Menu:GetTall() - MenuTopBar:GetTall() - 35)
-	LeftSideBar:SetPos(0, MenuTopBar:GetTall())
-	LeftSideBar.Paint = function(s, w, h) draw.RoundedBoxEx(4, 0, 0, w, h, MenuColors.OpaqueBlack, false, false, true, false) end
-
-	local UptimeBar = vgui.Create("DPanel", Menu)
-	UptimeBar:SetSize(LeftSideBar:GetWide(), 35)
-	UptimeBar:SetPos(0, Menu:GetTall() - UptimeBar:GetTall())
-	UptimeBar.Paint = function(s, w, h)
-		draw.RoundedBoxEx(4, 0, 0, w, h, MenuColors.OpaqueBlack, false, false, false, true)
-		surface.SetDrawColor(SColor.r, SColor.g, SColor.b, SColor.a)
-		surface.DrawLine(0, 0, w, 0)
-	end
-
-	local VersionLbl = vgui.Create("DLabel", UptimeBar)
-	VersionLbl:SetSize(UptimeBar:GetWide(), UptimeBar:GetTall())
-	VersionLbl:SetPos(0, 0)
-	VersionLbl:SetFont("GProfiler.Menu.VersionLbl")
-	VersionLbl:SetTextColor(MenuColors.White)
-	VersionLbl:SetText("GProfiler • v" .. GProfiler.Version)
-	VersionLbl:SetContentAlignment(5)
-	VersionLbl.Paint = nil
-
-	local CloseButton = vgui.Create("DButton", MenuTopBar)
-	CloseButton:SetSize(MenuTopBar:GetTall(), MenuTopBar:GetTall())
-	CloseButton:SetPos(Menu:GetWide() - CloseButton:GetWide(), 0)
+	local CloseButton = vgui.Create("DButton", Header)
+	CloseButton:SetSize(GProfiler.GetScaledSize(56), GProfiler.GetScaledSize(56))
+	CloseButton:SetPos(Header:GetWide() - CloseButton:GetWide() - GProfiler.GetScaledSize(20), Header:GetTall() / 2 - CloseButton:GetTall() / 2)
 	CloseButton:SetText("X")
-	CloseButton:SetFont("GProfiler.Menu.SectionHeader")
-	CloseButton:SetTextColor(MenuColors.White)
-	CloseButton.Paint = nil
-	CloseButton.DoClick = function() Menu:Close() end
+	CloseButton:SetTextColor(Color(255, 215, 215))
+	CloseButton:SetFont("GProfiler.HeaderTitle")
+	CloseButton.Paint = function(s, w, h)
+		RNDX.Draw(4, 0 ,0, w, h, Color(176, 64, 64))
+		if s:IsHovered() then
+			RNDX.Draw(4, 0, 0, w, h, Color(255, 64, 64))
+		end
+	end
+	CloseButton.DoClick = function() Main:Close() end
 
-	local MenuContent = vgui.Create("DPanel", Menu)
-	MenuContent:SetSize(Menu:GetWide() - LeftSideBar:GetWide(), Menu:GetTall() - MenuTopBar:GetTall())
-	MenuContent:SetPos(LeftSideBar:GetWide(), MenuTopBar:GetTall())
-	MenuContent.Paint = nil
+	local InnerMain = vgui.Create("DPanel", Main)
+	InnerMain:SetSize(Main:GetWide() - GProfiler.GetScaledSize(20), Main:GetTall() - Header:GetTall() - GProfiler.GetScaledSize(30))
+	InnerMain:SetPos(GProfiler.GetScaledSize(10), Header:GetTall() + GProfiler.GetScaledSize(20))
+	InnerMain.Paint = nil
 
-	GProfiler.Menu.Content = MenuContent
+	local SidebarBase, ContentBase = GProfiler.Utils.VSplitPanel(InnerMain, GProfiler.GetScaledSize(10), "sb_cnt", 0.185)
+	SidebarBase.Paint = nil
+	ContentBase.Paint = nil
 
-	local TabList = vgui.Create("DPanelList", LeftSideBar)
-	TabList:SetSize(LeftSideBar:GetWide(), LeftSideBar:GetTall())
-	TabList:SetPos(0, 0)
-	TabList:EnableVerticalScrollbar(true)
-	TabList:SetSpacing(0)
-	TabList.Paint = nil
+	local Sidebar = vgui.Create("DPanel", SidebarBase)
+	Sidebar:SetSize(GProfiler.GetScaledSize(600), Main:GetTall() - Header:GetTall() - GProfiler.GetScaledSize(30))
+	Sidebar.Paint = nil
 
-	local padding = 10
+	local Scroller = vgui.Create("DScrollPanel", Sidebar)
+	Scroller:SetSize(Sidebar:GetSize())
 
-	local activeTab = nil
-	local BottomTabs = {}
+	local sbar = Scroller:GetVBar()
+	sbar:SetWide(GProfiler.GetScaledSize(12))
+	sbar:SetHideButtons(true)
+	sbar.Paint = function(s, w, h)
+		RNDX.Draw(4, 0, 0, w, h, MenuColors.ScrollBar)
+	end
+	sbar.btnGrip.Paint = function(s, w, h)
+		RNDX.Draw(4, 0, 0, w, h, MenuColors.ScrollBarGrip)
+		if s:IsHovered() then
+			RNDX.Draw(4, 0, 0, w, h, MenuColors.ScrollBarGripOutline)
+		end
+	end
 
-	local function AddTab(k, v, alt)
-		local Tab = vgui.Create("DButton")
-		Tab.Lerped = 0
-		Tab:SetSize(TabList:GetWide(), 50)
+	local List = vgui.Create("DIconLayout", Scroller)
+	List:SetSize(Scroller:GetSize())
+	List:SetSpaceY(GProfiler.GetScaledSize(10))
+
+	for k, v in ipairs(Menu.Tabs) do
+		local Icon = Material(v.Icon, "smooth noclamp")
+		local IconSize = GProfiler.GetScaledSize(60)
+
+		local Tab = vgui.Create("DButton", List)
+		Tab:SetSize(Scroller:GetWide(), GProfiler.GetScaledSize(100))
 		Tab:SetText("")
 		Tab.Paint = function(s, w, h)
-			if alt then
-				draw.RoundedBox(4, 0, 0, w, h, MenuColors.HeaderSeparator)
-				draw.RoundedBox(4, 2, 2, w - 4, h - 4, MenuColors.OpaqueBlack)
-
-				if s:IsHovered() or activeTab == s then
-					draw.RoundedBox(4, 0, 0, w, h, MenuColors.HeaderSeparator)
-				end
-				return
-			end
-			surface.SetDrawColor(SColor.r, SColor.g, SColor.b, SColor.a)
-			surface.DrawLine(0, h - 1, w, h - 1)
-
-			if s:IsHovered() or activeTab == s then
-				s.Lerped = Lerp(FrameTime() * 5, s.Lerped, w + 2)
-			else
-				s.Lerped = Lerp(FrameTime() * 5, s.Lerped, 0)
+			RNDX.Draw(4, 0, 0, w, h, Color(25, 60, 97, 255))
+			if Menu.LastTab == k then
+				RNDX.Draw(4, 0, 0, w, h, Color(30, 90, 152, 255))
+			elseif s:IsHovered() then
+				RNDX.Draw(4, 0, 0, w, h, Color(34, 77, 122, 255))
 			end
 
-			draw.RoundedBox(0, 0, 0, s.Lerped, h, MenuColors.TopBarSeparator)
+			surface.SetDrawColor(191, 237, 255, 255)
+			surface.SetMaterial(Icon)
+			surface.DrawTexturedRect(GProfiler.GetScaledSize(20), h / 2 - IconSize / 2, IconSize, IconSize)
+
+			draw.SimpleText(GetTabName(v.Name), "GProfiler.Menu.TabText", GProfiler.GetScaledSize(100), h / 2, MenuColors.White, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			if not v.BadgeFunc then return end
+
+			local time, isActive = v.BadgeFunc()
+			if time then
+				surface.SetFont("GProfiler.Menu.TabText")
+				local timeWidth, timeHeight = surface.GetTextSize(time)
+				local badgeWidth = timeWidth + GProfiler.GetScaledSize(10)
+				local badgeHeight = timeHeight + GProfiler.GetScaledSize(5)
+
+				local badgeX = w - badgeWidth - GProfiler.GetScaledSize(20)
+				local badgeY = h / 2 - badgeHeight / 2
+
+				RNDX.Draw(4, badgeX, badgeY, badgeWidth, badgeHeight, isActive and Color(36, 172, 82, 255) or Color(196, 79, 79))
+				draw.SimpleText(time, "GProfiler.Menu.TabBadge", badgeX + badgeWidth / 2, badgeY + badgeHeight / 2, MenuColors.White, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			end
 		end
 		Tab.DoClick = function()
-			GProfiler.Menu.OpenTab(v.Name, v.Function)
-			activeTab = Tab
-			GProfiler.Menu.LastTab = k
+			Menu.OpenTab(v.Name, v.Function)
+			Menu.LastTab = k
 		end
 
-		local TabIcon = vgui.Create("DImage", Tab)
-		TabIcon:SetSize(Tab:GetTall() - padding * 2, Tab:GetTall() - padding * 2)
-		TabIcon:SetPos(padding, padding)
-		TabIcon:SetImage(v.Icon)
-
-		local TabText = vgui.Create("DLabel", Tab)
-		TabText:SetFont("GProfiler.Menu.TabText")
-		TabText:SetText(GetTabName(v.Name))
-		TabText:SetTextColor(MenuColors.White)
-		TabText:SizeToContents()
-		TabText:SetPos(TabIcon:GetWide() + padding * 2, Tab:GetTall() / 2 - TabText:GetTall() / 2)
-		TabText:SetContentAlignment(5)
-
-		if v.BadgeFunc then
-			local TabBadge = vgui.Create("DLabel", Tab)
-			TabBadge:SetSize(1, 1)
-			TabBadge:SetText("")
-			TabBadge:SetFont("GProfiler.Menu.TabText")
-			TabBadge:SetPos(Tab:GetWide() - TabBadge:GetWide() - padding, Tab:GetTall() / 2 - TabBadge:GetTall() / 2)
-			TabBadge:SetContentAlignment(5)
-			TabBadge.Think = function(s)
-				local text = v.BadgeFunc()
-				if not s.CurrentText or s.CurrentText ~= text then
-					s.CurrentText = text
-					surface.SetFont(s:GetFont())
-					local w, h = surface.GetTextSize(text or "")
-					if text == "" then
-						s:SetSize(h / 2, h / 2)
-					else
-						s:SetSize(w + 5, h + 5)
-					end
-					s:SetPos(Tab:GetWide() - s:GetWide() - padding, Tab:GetTall() / 2 - s:GetTall() / 2)
-				end
-			end
-			TabBadge.Paint = function(s, w, h)
-				local text, color = v.BadgeFunc()
-				if text and color then
-					if text == "" then
-						draw.RoundedBox(h / 2, 0, 0, w, h, color)
-					else
-						draw.RoundedBox(4, 0, 0, w, h, color)
-						draw.SimpleText(text, "GProfiler.Menu.TabBadge", w / 2, h / 2, MenuColors.White, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-					end
-				end
-			end
-		end
-
-		return Tab
+		List:Add(Tab)
 	end
 
-	for k, v in ipairs(GProfiler.Menu.Tabs) do
-		if v.Weight == 999 then
-			table.insert(BottomTabs, v)
-			continue
-		end
-
-		local Tab = AddTab(k, v)
-		TabList:AddItem(Tab)
+	local Content = vgui.Create("DPanel", ContentBase)
+	Content:SetSize(ContentBase:GetSize())
+	Content.Paint = function(s, w, h)
+		RNDX.Draw(8, 0, 0, w, h, Color(18, 48, 74, 255))
 	end
 
-	if #BottomTabs > 0 then
-		local BottomTabList = vgui.Create("DPanelList", LeftSideBar)
-		BottomTabList:SetSize(LeftSideBar:GetWide() - 6, 50 * #BottomTabs)
-		BottomTabList:SetPos(3, LeftSideBar:GetTall() - BottomTabList:GetTall() - 5)
-		BottomTabList:EnableVerticalScrollbar(true)
-		BottomTabList:SetSpacing(0)
-		BottomTabList.Paint = nil
+	Menu.Content = Content
 
-		for k, v in ipairs(BottomTabs) do
-			local Tab = AddTab(k, v, true)
-			BottomTabList:AddItem(Tab)
+	local LastTab = Menu.Tabs[Menu.LastTab or 1]
+	Menu.OpenTab(LastTab.Name, LastTab.Function)
+
+	SidebarBase.OnHandleMoved = function()
+		Sidebar:SetSize(SidebarBase:GetWide(), Sidebar:GetTall())
+		Scroller:SetSize(Sidebar:GetSize())
+		List:SetSize(Scroller:GetSize())
+		for k, v in ipairs(List:GetChildren()) do
+			v:SetSize(Scroller:GetWide(), GProfiler.GetScaledSize(100))
 		end
 	end
 
-	TabList:GetItems()[GProfiler.Menu.LastTab]:DoClick()
+	ContentBase.OnHandleMoved = function()
+		Content:SetSize(ContentBase:GetWide(), ContentBase:GetTall())
+		if IsValid(Content.Tab) then
+			if Content.Tab.OnHandleMoved then Content.Tab:OnHandleMoved() end
+		end
+	end
 end
+if GProfiler.Ready then Menu:Open() end
 
-function GProfiler.Menu.RegisterTab(name, icon, weight, func, badgeFunc)
+function Menu.RegisterTab(name, icon, weight, func, badgeFunc)
 	local tbl = {
 		["Name"] = name,
 		["Icon"] = icon,
@@ -247,33 +197,34 @@ function GProfiler.Menu.RegisterTab(name, icon, weight, func, badgeFunc)
 		["BadgeFunc"] = badgeFunc
 	}
 
-	for k, v in ipairs(GProfiler.Menu.Tabs) do
+	for k, v in ipairs(Menu.Tabs) do
 		if v.Name == name then
-			GProfiler.Menu.Tabs[k] = tbl
-			table.sort(GProfiler.Menu.Tabs, function(a, b) return a.Weight < b.Weight end)
+			table.Merge(v, tbl)
+			table.sort(Menu.Tabs, function(a, b) return a.Weight < b.Weight end)
 			return
 		end
 	end
 
-	table.insert(GProfiler.Menu.Tabs, tbl)
-	table.sort(GProfiler.Menu.Tabs, function(a, b) return a.Weight < b.Weight end)
+	table.insert(Menu.Tabs, tbl)
+	table.sort(Menu.Tabs, function(a, b) return a.Weight < b.Weight end)
 end
 
-function GProfiler.Menu.OpenTab(name, func)
-	if not IsValid(GProfiler.Menu.Content) then return end
+function Menu.OpenTab(name, func)
+	if not IsValid(Menu.Content) then return end
 	if not name or not func then return end
 
-	GProfiler.Menu.Content:Clear()
+	Menu.Content:Clear()
 
-	local Tab = vgui.Create("DPanel", GProfiler.Menu.Content)
-	Tab:SetSize(GProfiler.Menu.Content:GetWide(), GProfiler.Menu.Content:GetTall())
+	local Tab = vgui.Create("DPanel", Menu.Content)
+	Tab:SetSize(Menu.Content:GetWide(), Menu.Content:GetTall())
 	Tab.Paint = nil
+	Menu.Content.Tab = Tab
 
-	func(Tab)
+	func(Tab, Menu.Content)
 
-	if GProfiler.Menu.Title then
-		GProfiler.Menu.Title:SetText("GProfiler - " .. GetTabName(name))
-		GProfiler.Menu.Title:SizeToContents()
+	if Menu.Title then
+		Menu.Title:SetText("GProfiler - " .. GetTabName(name))
+		Menu.Title:SizeToContents()
 	end
 end
 
@@ -287,21 +238,20 @@ if isstring(GProfiler.Config.MenuCommands.Chat) then
 else hook.Remove("OnPlayerChat", "GProfiler.MenuCommands.Chat") end
 
 if isstring(GProfiler.Config.MenuCommands.Console) then
-	concommand.Add(GProfiler.Config.MenuCommands.Console, GProfiler.Menu.Open)
+	concommand.Add(GProfiler.Config.MenuCommands.Console, Menu.Open)
 end
 
 local function CreateFonts()
-	surface.CreateFont("GProfiler.Menu.Title", { font = "Roboto", size = 26, weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Menu.SectionHeader", { font = "Roboto", size = 18, weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Menu.TabText", { font = "Roboto", size = 20, weight = 400, antialias = true })
-	surface.CreateFont("GProfiler.Menu.TabBadge", { font = "Roboto", size = 18, weight = 400, antialias = true })
-	surface.CreateFont("GProfiler.Menu.VersionLbl", { font = "Roboto", size = 18, weight = 400, antialias = true })
-	surface.CreateFont("GProfiler.Menu.RealmSelector", { font = "Roboto", size = 18, weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Menu.StartButton", { font = "Roboto", size = 16, weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Menu.ListHeader", { font = "Roboto", size = ScreenScale(4), weight = 400,	antialias = true })
-	surface.CreateFont("GProfiler.Menu.FunctionDetails", { font = "Roboto", size = 16, weight = 400, antialias = true })
-	surface.CreateFont("GProfiler.Menu.FocusEntry", { font = "Roboto", size = 16, weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Menu.RowText", { font = "Roboto", size = 16, weight = 400, antialias = true })
+	CachedSizes = {}
+	surface.CreateFont("GProfiler.HeaderTitle", { font = "Inter Bold", size = GProfiler.GetScaledSize(64), weight = 800, antialias = true })
+	surface.CreateFont("GProfiler.InnerTitle", { font = "Inter Bold", size = GProfiler.GetScaledSize(44), weight = 800, antialias = true })
+	surface.CreateFont("GProfiler.HeaderSubtitle", { font = "Inter", size = GProfiler.GetScaledSize(24), weight = 400, antialias = true })
+	surface.CreateFont("GProfiler.Menu.TabText", { font = "Inter Bold", size = GProfiler.GetScaledSize(38), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Menu.TabBadge", { font = "Inter Bold", size = GProfiler.GetScaledSize(32), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Code", { font = "Roboto", size = GProfiler.GetScaledSize(22), weight = 500 })
+	surface.CreateFont("GProfiler.HeaderInteract", { font = "Inter", size = GProfiler.GetScaledSize(32), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Inter24", { font = "Inter", size = GProfiler.GetScaledSize(24), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Inter28", { font = "Inter", size = GProfiler.GetScaledSize(28), weight = 500, antialias = true })
 end
 CreateFonts()
 hook.Add("OnScreenSizeChanged", "GProfiler.Menu.RescaleFonts", CreateFonts)

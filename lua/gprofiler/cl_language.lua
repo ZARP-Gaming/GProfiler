@@ -79,8 +79,9 @@ GProfiler.Language:AddLanguage("english", function(Lang)
 	Lang:AddPhrase("profiler_no_profile", "No profile data available! (More than 100 queries?)")
 
 	-- Tab Names
+	Lang:AddPhrase("tab_overview", "Overview")
 	Lang:AddPhrase("tab_hooks", "Hooks")
-	Lang:AddPhrase("tab_networking", "Networking")
+	Lang:AddPhrase("tab_networking", "Network")
 	Lang:AddPhrase("tab_functions", "Functions")
 	Lang:AddPhrase("tab_commands", "Commands")
 	Lang:AddPhrase("tab_timers", "Timers")
