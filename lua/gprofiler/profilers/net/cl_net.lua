@@ -58,31 +58,58 @@ function GProfiler.Net.DoTab(Base, Outer)
 	local Source, Breakdown = GProfiler.Utils.HSplitPanel(right, GProfiler.GetScaledSize(10), "net_r_bt", 0.75)
 	local ClientReceivers, ServerReceivers = GProfiler.Utils.VSplitPanel(Receivers, GProfiler.GetScaledSize(10), "net_lb_lr", 0.5)
 
+	local SourceHeader = vgui.Create("DLabel", Source)
+	SourceHeader:SetFont("GProfiler.Inter24")
+	SourceHeader:SetTextColor(GProfiler.SyntaxColors.comment)
+	SourceHeader:SetPos(GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(5))
+	SourceHeader:SetSize(Source:GetWide() - GProfiler.GetScaledSize(20), GProfiler.GetScaledSize(24))
+	SourceHeader:SetText("Select a network message to view source.")
+
 	Source.Paint = function(s, w, h)
 		GProfiler.RNDX.Draw(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 	end
 
 	local RichText = vgui.Create("RichText", Source)
-	RichText:SetSize(Source:GetWide() - GProfiler.GetScaledSize(20), Source:GetTall() - GProfiler.GetScaledSize(20))
-	RichText:SetPos(GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(10))
+	RichText:SetText("")
+	RichText:SetSize(Source:GetWide() - GProfiler.GetScaledSize(20), Source:GetTall() - GProfiler.GetScaledSize(20) - GProfiler.GetScaledSize(30))
+	RichText:SetPos(GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(30))
 	RichText:SetVerticalScrollbarEnabled(true)
 	function RichText:PerformLayout()
 		self:SetFontInternal("GProfiler.Code")
 	end
 
 	Source.OnHandleMoved = function()
-		RichText:SetSize(Source:GetWide() - GProfiler.GetScaledSize(20), Source:GetTall() - GProfiler.GetScaledSize(20))
-		RichText:SetPos(GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(10))
+		SourceHeader:SetSize(Source:GetWide() - GProfiler.GetScaledSize(20), GProfiler.GetScaledSize(24))
+		RichText:SetSize(Source:GetWide() - GProfiler.GetScaledSize(20), Source:GetTall() - GProfiler.GetScaledSize(20) - GProfiler.GetScaledSize(30))
+		RichText:SetPos(GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(30))
 		RichText:InvalidateLayout()
 	end
 
 	local BreakdownPanel = vgui.Create("DScrollPanel", Breakdown)
 	BreakdownPanel:Dock(FILL)
 
+	local function SetDefaultBreakdownState()
+		BreakdownPanel:Clear()
+		local pnl = vgui.Create("DPanel", BreakdownPanel)
+		pnl:Dock(FILL)
+		pnl:DockMargin(0, 0, 0, 0)
+		pnl.Paint = function(s, w, h)
+			GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+			draw.SimpleText("Select a network message to view breakdown", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		end
+
+		pnl:SetTall(BreakdownPanel:GetTall())
+		BreakdownPanel.OnSizeChanged = function(s, w, h)
+			if IsValid(pnl) then pnl:SetTall(h) end
+		end
+	end
+	SetDefaultBreakdownState()
+
 	local function FormatBits(bits)
-		if not bits or bits == 0 then return "0 Bytes" end
+		if not bits or bits < 0.01 then return "0 Bytes" end
+		if not isnumber(bits) then return "oh fiddlesticks, what now?" end
 		if bits < 8 then
-			return bits .. (bits == 1 and " Bit" or " Bits")
+			return math.Round(bits, 2) .. (bits == 1 and " Bit" or " Bits")
 		end
 		return string.NiceSize(bits / 8)
 	end
@@ -170,8 +197,8 @@ function GProfiler.Net.DoTab(Base, Outer)
 		return ResultsList
 	end
 
-	local ResultsList = CreateList(ResultsSent, {"Name", "Count", "Size", "Total", "Avg Time"})
-	local ReceivedList = CreateList(ResultsReceived, {"Name", "Count", "Size", "Total", "Avg Time"})
+	local ResultsList = CreateList(ResultsSent, {"Name", "Count", "Size (Largest)", "Size (Total)", "Time (Total)", "Time (Avg)", "Time (Longest)"})
+	local ReceivedList = CreateList(ResultsReceived, {"Name", "Count", "Size (Largest)", "Size (Total)", "Time (Total)", "Time (Avg)", "Time (Longest)"})
 
 	Results.OnHandleMoved = function()
 		ResultsList:SetSize(Results:GetWide(), Results:GetTall() - SentHeader:GetTall())
@@ -391,7 +418,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 				end
 			end
 			CalcHeight(RootNodes)
-			s:SetTall(h + GProfiler.GetScaledSize(10))
+			s:SetTall(math.max(h + GProfiler.GetScaledSize(10), BreakdownPanel:GetTall()))
 		end
 
 		Canvas.OnMousePressed = function(s, code)
@@ -411,11 +438,27 @@ function GProfiler.Net.DoTab(Base, Outer)
 	end
 
 	function ResultsList:OnRowSelected(rowIndex, row)
+		ReceivedList:ClearSelection()
 		local name = row:GetColumnText(1)
 		local data = GProfiler.Net.ProfileData.Out and GProfiler.Net.ProfileData.Out[name]
 
 		if data then
 			BreakdownPanel:Clear()
+			
+			local Loading = vgui.Create("DPanel", BreakdownPanel)
+			Loading:Dock(FILL)
+			Loading:DockMargin(0, 0, 0, 0)
+			Loading.Paint = function(s, w, h)
+				GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+				draw.SimpleText("Loading breakdown...", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+			Loading:SetTall(BreakdownPanel:GetTall())
+			BreakdownPanel.OnSizeChanged = function(s, w, h)
+				if IsValid(Loading) then Loading:SetTall(h) end
+			end
+
+			RichText:SetText("Loading source...")
+			SourceHeader:SetText("")
 
 			local file = data.Source or data[4]
 			local lineDefined = data.LineDefined or data[5] or 0
@@ -424,6 +467,8 @@ function GProfiler.Net.DoTab(Base, Outer)
 			if file and file ~= "" then
 				file = string.match(file, "@?(.+)")
 				if not file then file = data.Source or data[4] end
+				
+				SourceHeader:SetText(string.format("%s (%d - %d)", file, lineDefined, lastLineDefined))
 
 				GProfiler.RequestFunctionSource(file, lineDefined, lastLineDefined, function(src)
 					if src then
@@ -435,13 +480,20 @@ function GProfiler.Net.DoTab(Base, Outer)
 			else
 				RichText:SetText("Failed to load source (2)")
 			end
-
+			
 			if Net.Realm == "Client" then
 				local breakdownData = GProfiler.Net.Breakdowns and GProfiler.Net.Breakdowns[name]
 				if breakdownData then
 					PopulateBreakdown(name, breakdownData.Children or {}, data.Size or data[7] or 0)
 				end
 			else
+				GProfiler.Net.UpdateBreakdownUI = function(msg)
+					if msg ~= name then return end
+					local d = GProfiler.Net.Breakdowns and GProfiler.Net.Breakdowns[name]
+					if d then PopulateBreakdown(name, d.Nodes, d.Size) end
+					GProfiler.Net.UpdateBreakdownUI = nil
+				end
+
 				net.Start("GProfiler_Net_RequestBreakdown")
 				net.WriteString(name)
 				net.SendToServer()
@@ -450,11 +502,27 @@ function GProfiler.Net.DoTab(Base, Outer)
 	end
 
 	function ReceivedList:OnRowSelected(rowIndex, row)
+		ResultsList:ClearSelection()
 		local name = row:GetColumnText(1)
 		local data = GProfiler.Net.ProfileData.Inc and GProfiler.Net.ProfileData.Inc[name]
 
 		if data then
 			BreakdownPanel:Clear()
+
+			local Header = vgui.Create("DPanel", BreakdownPanel)
+			Header:Dock(FILL)
+			Header:DockMargin(0, 0, 0, 0)
+			Header.Paint = function(s, w, h)
+				GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+				draw.SimpleText("Breakdown only available for sent messages", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+			Header:SetTall(BreakdownPanel:GetTall())
+			BreakdownPanel.OnSizeChanged = function(s, w, h)
+				if IsValid(Header) then Header:SetTall(h) end
+			end
+
+			RichText:SetText("Loading source...")
+			SourceHeader:SetText("")
 
 			local file = data.Source or data[4]
 			local lineDefined = data.LineDefined or data[5] or 0
@@ -463,6 +531,8 @@ function GProfiler.Net.DoTab(Base, Outer)
 			if file and file ~= "" then
 				file = string.match(file, "@?(.+)")
 				if not file then file = data.Source or data[4] end
+				
+				SourceHeader:SetText(string.format("%s (%d - %d)", file, lineDefined, lastLineDefined))
 
 				GProfiler.RequestFunctionSource(file, lineDefined, lastLineDefined, function(src)
 					if src then
@@ -483,24 +553,30 @@ function GProfiler.Net.DoTab(Base, Outer)
 		ResultsList:Clear()
 		if GProfiler.Net.ProfileData.Out then
 			for name, data in pairs(GProfiler.Net.ProfileData.Out) do
-				local count = data.Count or data[1] or 0
-				local maxSize = data.MaxSize or data[2] or 0
-				local totalSize = data.TotalSize or data[3] or 0
-				local avgTime = data.AverageTime or data[9] or 0
-
-				ResultsList:AddLine(name, count, FormatBits(maxSize), FormatBits(totalSize), math.Round(avgTime * 1000, 3) .. "ms")
+				ResultsList:AddLine(
+					name,
+					data.Count or data[1] or 0,
+					FormatBits(data.MaxSize or data[2] or 0),
+					FormatBits(data.TotalSize or data[3] or 0),
+					data.TotalTime or data[7] or 0,
+					data.AverageTime or data[9] or 0,
+					data.LongestTime or data[8] or 0
+				)
 			end
 		end
 
 		ReceivedList:Clear()
 		if GProfiler.Net.ProfileData.Inc then
 			for name, data in pairs(GProfiler.Net.ProfileData.Inc) do
-				local count = data.Count or data[1] or 0
-				local maxSize = data.MaxSize or data[2] or 0
-				local totalSize = data.TotalSize or data[3] or 0
-				local avgTime = data.AverageTime or data[9] or 0
-
-				ReceivedList:AddLine(name, count, FormatBits(maxSize), FormatBits(totalSize), math.Round(avgTime * 1000, 3) .. "ms")
+				ReceivedList:AddLine(
+					name,
+					data.Count or data[1] or 0,
+					FormatBits(data.MaxSize or data[2] or 0),
+					FormatBits(data.TotalSize or data[3] or 0),
+					data.TotalTime or data[7] or 0,
+					data.AverageTime or data[9] or 0,
+					data.LongestTime or data[8] or 0
+				)
 			end
 		end
 	end

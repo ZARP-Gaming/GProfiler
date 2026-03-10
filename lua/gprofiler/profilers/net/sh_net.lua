@@ -55,7 +55,8 @@ local function DetourOutgoing()
 		GProfiler.Net.CurrentMsg = {
 			Name = nameLower,
 			Stack = {},
-			Root = { Children = {} }
+			Root = { Children = {} },
+			StartTime = SysTime()
 		}
 		GProfiler.Net.CurrentMsg.Stack[1] = GProfiler.Net.CurrentMsg.Root
 
@@ -76,9 +77,15 @@ local function DetourOutgoing()
 		local bytes, bits = net.BytesWritten()
 		local size = bits or (bytes * 8)
 
+		local dt = SysTime() - (GProfiler.Net.CurrentMsg.StartTime or SysTime())
+
 		d[1] = d[1] + 1
 		d[2] = max(d[2], size)
 		d[3] = d[3] + size
+
+		d[7] = d[7] + dt
+		d[8] = max(d[8], dt)
+		d[9] = d[7] / d[1]
 
 		if not d[4] then
 			local src = debug.getinfo(3, "S")
