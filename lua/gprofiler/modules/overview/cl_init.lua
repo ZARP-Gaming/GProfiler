@@ -38,50 +38,32 @@ function GProfiler.Overview.DoTab(Base)
 	Container:Dock(FILL)
 	Container.Paint = nil
 
-	local TopPnl, BottomPnl = GProfiler.Utils.HSplitPanel(Container, 4, "overview_split", 0.5)
+	local Scroll = vgui.Create("DScrollPanel", Container)
+	Scroll:Dock(FILL)
 
-	local function AddHeader(pnl, title, icon)
-		local header, lbl = GProfiler.Menu.CreateHeader(pnl, title, 0, 0, pnl:GetWide(), 32, true)
-		header:Dock(TOP)
-
-		if IsValid(lbl) and icon then
-			local iconImg = vgui.Create("DImage", header)
-			iconImg:SetImage(icon)
-			iconImg:SetSize(20, 20)
-			iconImg:SetPos(8, 6)
-
-			local x, y = lbl:GetPos()
-			lbl:SetPos(36, y)
-		end
-		return header
-	end
-
-	local function AddGraphEntry(parent, title, queue, color, suffix, formatter)
-		local g = vgui.Create("GP.Graph", parent)
+	local function AddGraph(title)
+		local g = vgui.Create("GP.Graph", Scroll)
 		g:Dock(TOP)
 		g:SetTall(150)
 		g:DockMargin(8, 8, 8, 0)
 		g:SetTitle(title)
-		g:AddSegment(queue, color, suffix, formatter)
 		return g
 	end
 
-	-- AddHeader(TopPnl, "Client Performance", "icon16/monitor.png")
-	local ClientScroll = vgui.Create("DScrollPanel", TopPnl)
-	ClientScroll:Dock(FILL)
+	local g = AddGraph("Frametime")
+	g:AddSegment(GProfiler.Overview.Data.SV.Frametime, Color(220, 80, 80), "ms (SV)", function(v) return string.format("%.2f", v * 1000) end, "icon16/server.png")
+	g:AddSegment(GProfiler.Overview.Data.CL.Frametime, Color(48, 160, 220), "ms (CL)", function(v) return string.format("%.2f", v * 1000) end, "icon16/monitor.png")
 
-	AddGraphEntry(ClientScroll, "Frametime", GProfiler.Overview.Data.CL.Frametime, Color(48, 160, 220), " ms", function(v) return string.format("%.2f", v * 1000) end)
-	AddGraphEntry(ClientScroll, "Simtime", GProfiler.Overview.Data.CL.Simtime, Color(220, 160, 48), " ms", function(v) return string.format("%.2f", v * 1000) end)
-	AddGraphEntry(ClientScroll, "Memory", GProfiler.Overview.Data.CL.MemUsage, Color(160, 48, 220), " MiB", function(v) return string.format("%.1f", v / 1024) end)
-	AddGraphEntry(ClientScroll, "FPS", GProfiler.Overview.Data.CL.FPS, Color(48, 220, 160), " FPS", function(v) return string.format("%.0f", v) end)
+	g = AddGraph("Simulation Time")
+	g:AddSegment(GProfiler.Overview.Data.CL.Simtime, Color(220, 160, 48), "ms (CL)", function(v) return string.format("%.2f", v * 1000) end, "icon16/monitor.png")
+	g:AddSegment(GProfiler.Overview.Data.SV.Simtime, Color(255, 120, 0), "ms (SV)", function(v) return string.format("%.2f", v * 1000) end, "icon16/server.png")
 
-	-- AddHeader(BottomPnl, "Server Performance", "icon16/server.png")
-	local ServerScroll = vgui.Create("DScrollPanel", BottomPnl)
-	ServerScroll:Dock(FILL)
+	g = AddGraph("Memory Usage")
+	g:AddSegment(GProfiler.Overview.Data.CL.MemUsage, Color(160, 48, 220), "MiB (CL)", function(v) return string.format("%.1f", v / 1024) end, "icon16/monitor.png")
+	g:AddSegment(GProfiler.Overview.Data.SV.MemUsage, Color(255, 48, 160), "MiB (SV)", function(v) return string.format("%.1f", v / 1024) end, "icon16/server.png")
 
-	AddGraphEntry(ServerScroll, "Frametime", GProfiler.Overview.Data.SV.Frametime, Color(220, 80, 80), " ms", function(v) return string.format("%.2f", v * 1000) end)
-	AddGraphEntry(ServerScroll, "Simtime", GProfiler.Overview.Data.SV.Simtime, Color(220, 140, 60), " ms", function(v) return string.format("%.2f", v * 1000) end)
-	AddGraphEntry(ServerScroll, "Memory", GProfiler.Overview.Data.SV.MemUsage, Color(140, 60, 220), " MiB", function(v) return string.format("%.1f", v / 1024) end)
+	g = AddGraph("Client FPS")
+	g:AddSegment(GProfiler.Overview.Data.CL.FPS, Color(48, 220, 160), "FPS", function(v) return string.format("%.0f", v) end, "icon16/monitor.png")
 end
 
 GProfiler.Menu.RegisterTab("Overview", "gprofiler/home.png", 0, GProfiler.Overview.DoTab, function()

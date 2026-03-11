@@ -70,8 +70,16 @@ end
 surface.CreateFont("GProfiler.Graph.Title", { font = "Roboto", size = 20, weight = 500, antialias = true })
 surface.CreateFont("GProfiler.Graph.ValueLarge", { font = "Roboto", size = 32, weight = 800, antialias = true })
 
-local PANEL = {}
+local graphBg = Color(16, 16, 24)
+local graphTitle = Color(220, 220, 220)
+local poly = {
+	{ x = 0, y = 0 },
+	{ x = 0, y = 0 },
+	{ x = 0, y = 0 },
+	{ x = 0, y = 0 },
+}
 
+local PANEL = {}
 AccessorFunc(PANEL, "m_strTitle", "Title", FORCE_STRING)
 AccessorFunc(PANEL, "m_fVisualMax", "VisualMax", FORCE_NUMBER)
 AccessorFunc(PANEL, "m_MainIcon", "Icon")
@@ -103,7 +111,7 @@ function PANEL:SetMainIcon(iconMat)
 end
 
 function PANEL:Paint(w, h)
-	draw.RoundedBox(8, 0, 0, w, h, Color(16, 16, 24))
+	draw.RoundedBox(8, 0, 0, w, h, graphBg)
 
 	local titleX = 16
 	if self.MainIcon then
@@ -113,7 +121,7 @@ function PANEL:Paint(w, h)
 		titleX = 16 + 20 + 8
 	end
 
-	draw.SimpleText(self:GetTitle(), "GProfiler.Graph.Title", titleX, 16, Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+	draw.SimpleText(self:GetTitle(), "GProfiler.Graph.Title", titleX, 16, graphTitle, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 
 	local iconX = w - 16
 	for i = #self.Data, 1, -1 do
@@ -142,7 +150,7 @@ function PANEL:Paint(w, h)
 		if count < 2 then continue end
 
 		local col = seg.color
-		surface.SetDrawColor(Color(col.r, col.g, col.b, 150))
+		surface.SetDrawColor(col.r, col.g, col.b, 150)
 		draw.NoTexture()
 
 		for i = 0, count - 2 do
@@ -153,18 +161,21 @@ function PANEL:Paint(w, h)
 			local x2 = ((i + 1) / (count - 1)) * w
 			local y2 = h - (val2 / max) * (h * 0.60)
 
-			local quad = {
-				{ x = x1, y = h },
-				{ x = x1, y = y1 },
-				{ x = x2, y = y2 },
-				{ x = x2, y = h }
-			}
-			surface.DrawPoly(quad)
+			poly[1].x = x1
+			poly[1].y = h
+			poly[2].x = x1
+			poly[2].y = y1
+			poly[3].x = x2
+			poly[3].y = y2
+			poly[4].x = x2
+			poly[4].y = h
+
+			surface.DrawPoly(poly)
 		end
 	end
 
 	local leftX = 16
-	local rightX = w - 16
+	local rightX = w - 72
 
 	for i, seg in ipairs(self.Data) do
 		local val = seg.queue:Get(seg.queue:Length() - 1)
@@ -176,10 +187,10 @@ function PANEL:Paint(w, h)
 		local fullText = txt .. " " .. (seg.suffix or "")
 
 		if i == 1 then
-			draw.SimpleText(fullText, "GProfiler.Graph.ValueLarge", rightX, 16, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+			draw.SimpleText(fullText, "GProfiler.Graph.Title", rightX, 14, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 			rightX = rightX - surface.GetTextSize(fullText) - 8
-		else -- todo: multiple segments is nice, but needs to look better
-			draw.SimpleText(fullText, "GProfiler.Graph.ValueLarge", rightX, 16, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		else
+			draw.SimpleText(fullText, "GProfiler.Graph.Title", rightX, 14, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 			rightX = rightX - surface.GetTextSize(fullText) - 8
 		end
 	end
