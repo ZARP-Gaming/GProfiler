@@ -1,12 +1,24 @@
 GProfiler.Net = GProfiler.Net or {}
 local Net = GProfiler.Net
 
--- Net.StartTime = Net.StartTime or 0
--- Net.EndTime = Net.EndTime or 0
--- Net.Realm = Net.Realm or "Client"
-Net.StartTime = 0
-Net.EndTime = 0
-Net.Realm = "Client"
+Net.StartTime = Net.StartTime or 0
+Net.EndTime = Net.EndTime or 0
+Net.Realm = Net.Realm or "Client"
+
+local function FormatBits(bits)
+	if not bits or bits < 0.01 then return "0 Bytes" end
+	if not isnumber(bits) then return "oh fiddlesticks, what now?" end
+
+	if bits < 8 then return math.Round(bits, 2) .. (bits == 1 and " Bit" or " Bits") end
+
+	local bytes = bits / 8
+	if bytes < 1024 then return math.Round(bytes, 2) .. (bytes == 1 and " Byte" or " Bytes") end
+
+	local kb = bytes / 1024
+	if kb < 1024 then return math.Round(kb, 2) .. " KB" end
+	local mb = kb / 1024
+	return math.Round(mb, 2) .. " MB"
+end
 
 function GProfiler.Net.DoTab(Base, Outer)
 	local Header = GProfiler.Utils.SetupHeader(Outer, "Networking", "gprofiler/network.png")
@@ -38,6 +50,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 		else
 			Net.StartTime = SysTime()
 			Net.EndTime = 0
+			Net.ProfileData = {}
 
 			if Net.Realm == "Client" then
 				GProfiler.Net:StartProfiler()
@@ -45,8 +58,11 @@ function GProfiler.Net.DoTab(Base, Outer)
 				net.Start("GProfiler_Net_ToggleServerProfile")
 				net.WriteBool(true)
 				net.SendToServer()
-				GProfiler.Net.ProfileData = {}
 			end
+		end
+
+		if Net.RefreshUI then
+			Net.RefreshUI()
 		end
 	end
 
@@ -95,7 +111,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 		pnl:DockMargin(0, 0, 0, 0)
 		pnl.Paint = function(s, w, h)
 			GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
-			draw.SimpleText("Select a network message to view breakdown", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("Select a network message to view breakdown.", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
 		pnl:SetTall(BreakdownPanel:GetTall())
@@ -104,15 +120,6 @@ function GProfiler.Net.DoTab(Base, Outer)
 		end
 	end
 	SetDefaultBreakdownState()
-
-	local function FormatBits(bits)
-		if not bits or bits < 0.01 then return "0 Bytes" end
-		if not isnumber(bits) then return "oh fiddlesticks, what now?" end
-		if bits < 8 then
-			return math.Round(bits, 2) .. (bits == 1 and " Bit" or " Bits")
-		end
-		return string.NiceSize(bits / 8)
-	end
 
 	local SentHeader = GProfiler.Utils.SetupHeader(ResultsSent, "Messages Sent", nil, true)
 	local ReceivedHeader = GProfiler.Utils.SetupHeader(ResultsReceived, "Messages Received", nil, true)
@@ -444,7 +451,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 
 		if data then
 			BreakdownPanel:Clear()
-			
+
 			local Loading = vgui.Create("DPanel", BreakdownPanel)
 			Loading:Dock(FILL)
 			Loading:DockMargin(0, 0, 0, 0)
@@ -467,7 +474,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 			if file and file ~= "" then
 				file = string.match(file, "@?(.+)")
 				if not file then file = data.Source or data[4] end
-				
+
 				SourceHeader:SetText(string.format("%s (%d - %d)", file, lineDefined, lastLineDefined))
 
 				GProfiler.RequestFunctionSource(file, lineDefined, lastLineDefined, function(src)
@@ -480,7 +487,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 			else
 				RichText:SetText("Failed to load source (2)")
 			end
-			
+
 			if Net.Realm == "Client" then
 				local breakdownData = GProfiler.Net.Breakdowns and GProfiler.Net.Breakdowns[name]
 				if breakdownData then
@@ -531,7 +538,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 			if file and file ~= "" then
 				file = string.match(file, "@?(.+)")
 				if not file then file = data.Source or data[4] end
-				
+
 				SourceHeader:SetText(string.format("%s (%d - %d)", file, lineDefined, lastLineDefined))
 
 				GProfiler.RequestFunctionSource(file, lineDefined, lastLineDefined, function(src)
@@ -582,11 +589,6 @@ function GProfiler.Net.DoTab(Base, Outer)
 	end
 	GProfiler.Net.RefreshUI = PopulateResults
 	PopulateResults()
-
-	Base.OnRemove = function()
-		GProfiler.Net.RefreshUI = nil
-		GProfiler.Net.UpdateBreakdownUI = nil
-	end
 
 	local function CreateReceiverList(Parent, Receivers, Title)
 		Parent:Clear()

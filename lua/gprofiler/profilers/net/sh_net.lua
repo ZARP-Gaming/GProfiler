@@ -123,8 +123,8 @@ local function DetourOutgoing()
 
 		GProfiler.Net.OriginalWrites[funcName] = net[funcName]
 		net[funcName] = function(...)
-			if not GProfiler.Net.CurrentMsg then 
-				return GProfiler.Net.OriginalWrites[funcName](...) 
+			if not GProfiler.Net.CurrentMsg then
+				return GProfiler.Net.OriginalWrites[funcName](...)
 			end
 
 			local entry = AddEntry(funcName, nil, ...)
@@ -132,7 +132,7 @@ local function DetourOutgoing()
 			table.insert(GProfiler.Net.CurrentMsg.Stack, entry)
 
 			local startB, startBits = net.BytesWritten()
-			local ret = {GProfiler.Net.OriginalWrites[funcName](...)} 
+			local ret = {GProfiler.Net.OriginalWrites[funcName](...)}
 			local endB, endBits = net.BytesWritten()
 
 			startBits = startBits or (startB * 8)
@@ -231,6 +231,10 @@ function GProfiler.Net:RestoreNet(ply)
 	net.Incoming = GProfiler.Net.OriginalIncoming
 	RestoreOutgoing()
 
+	if GProfiler.Net.RefreshUI then
+		GProfiler.Net.RefreshUI()
+	end
+
 	if CLIENT then return end
 
 	local function SendData(dataMap, isIncoming)
@@ -319,13 +323,13 @@ if SERVER then
 		local breakdownData = GProfiler.Net.Breakdowns[name]
 
 		net.Start("GProfiler_Net_SendBreakdown")
-		net.WriteString(name)
+		net.WriteString(name) -- TODO: assign an network id for these!
 		if breakdownData then
 			net.WriteBool(true)
 			net.WriteUInt(breakdownData.Size, 32)
 
 			local function WriteNode(node)
-				net.WriteString(node.Func)
+				net.WriteString(node.Func) -- ^
 				net.WriteUInt(node.Size, 32)
 				net.WriteUInt(#node.Children, 16)
 				for _, child in ipairs(node.Children) do
@@ -343,39 +347,4 @@ if SERVER then
 		end
 		net.Send(ply)
 	end)
-
-		concommand.Add("gprofiler_nettest", function(ply, cmd, args)
-			if IsValid(ply) and not GProfiler.Access.HasAccess(ply) then return end
-
-			GProfiler.Net:StartProfiler(ply)
-
-			timer.Simple(0, function()
-				net.Start("GProfiler_NetTest")
-					net.WriteAngle(Angle(1,2,3))
-					net.WriteBit(1)
-					net.WriteBool(true)
-					net.WriteColor(Color(255, 0, 0, 255))
-					net.WriteData("test", 4)
-					net.WriteDouble(1.23)
-					net.WriteFloat(4.56)
-					net.WriteInt(123, 32)
-					net.WriteString("a")
-					net.WriteType("string")
-					net.WriteUInt(456, 32)
-					net.WriteUInt64(ply:SteamID64())
-					net.WriteVector(Vector(7,8,9))
-					for i=1, 100 do
-						net.WriteString("test" .. i)
-					end
-				net.Broadcast()
-			end)
-
-			timer.Simple(3.1, function()
-				GProfiler.Net:RestoreNet(ply)
-			end)
-		end)
-	else
-		net.Receive("gprofiler_nettest", function(len)
-			print("got net test", len)
-		end)
-	end
+end

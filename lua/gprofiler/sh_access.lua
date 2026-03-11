@@ -102,7 +102,7 @@ hook.Add("Initialize", "GProfiler.Access.Register", function()
 end)
 
 function GProfiler.Access.HasAccess(ply)
-	if true then return true end
+	if GetGlobalBool("gprofiler_lan", false) then return true end
 	if ply:EntIndex() == 0 then return true end -- Console
 	if GProfiler.Config.AllowedSteamIDs[ply:SteamID64()] or GProfiler.Config.AllowedSteamIDs[ply:SteamID()] then return true end
 	if not GProfiler.Access.AdminSystem then return false end
