@@ -29,6 +29,7 @@ function GProfiler.Overview.DoTab(Base)
 	net.SendToServer()
 
 	Base.OnRemove = function(s)
+		if next(GProfiler.Utils.Graphs.Pinned) then return end
 		net.Start("GProfiler.OverviewSubscribe")
 		net.WriteBool(false)
 		net.SendToServer()
