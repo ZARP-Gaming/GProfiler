@@ -11,9 +11,12 @@ GProfiler.Config.LOG_WARNING = true
 GProfiler.Config.LOG_ERROR = true
 GProfiler.Config.LOG_LOAD = false
 
+-- Access
 GProfiler.Config.AllowedSteamIDs = { -- SteamIDs that can access GProfiler
 	["76561198XXXXXXXXX"] = true
 }
+
+GProfiler.Config.AllowSuperAdmin = false -- Allow players with superadmin (Player:IsSuperAdmin()) to access GProfiler regardless of other checks.
 
 --[[
 	If express is available, we use it over gmod's net library
@@ -27,47 +30,22 @@ GProfiler.Config.UseExpressNetworking = true
 -- Express is not worth using for small amounts, as it will be slower for small data
 GProfiler.Config.ExpressMinimumResults = 25
 
-if CLIENT then
-	GProfiler.MenuColors = {
-		White = Color(255, 255, 255),
-		Blue = Color(91, 118, 255),
+if SERVER then return end
 
-		-- Menu
-		Background = Color(8, 27, 48, 220),
-		OpaqueBlack = Color(0, 0, 0, 200),
-		OpaqueBlack2 = Color(0, 0, 0, 150),
-		TopBarSeparator = Color(91, 118, 255, 10),
-		HeaderSeparator = Color(91, 118, 255, 50),
-		RealmSelectorBackground = Color(38, 57, 78),
-		RealmSelectorOutline = Color(88, 107, 138),
-		ActiveProfile = Color(10, 155, 10),
-		InactiveProfile = Color(200, 50, 50),
+GProfiler.MenuColors = {
+	-- Misc
+	White = Color(255, 255, 255),
+	Blue = Color(91, 118, 255),
+	Black100 = Color(0, 0, 0, 100),
 
-		-- Lists
-		DListBackground = Color(18, 37, 58),
-		DListColumnBackground = Color(68, 87, 108),
-		DListColumnOutline = Color(88, 107, 138),
-		DListRowBackground = Color(48, 67, 88),
-		DListRowHover = Color(68, 87, 108),
-		DListRowTextColor = Color(235, 235, 235),
-		DListRowSelected = Color(91, 118, 255, 50),
+	-- Scrollbars
+	ScrollBar = Color(38, 57, 78),
+	ScrollBarGrip = Color(68, 87, 108),
+	ScrollBarGripOutline = Color(88, 107, 138),
+}
 
-		-- Scrollbars
-		ScrollBar = Color(38, 57, 78),
-		ScrollBarGrip = Color(68, 87, 108),
-		ScrollBarGripOutline = Color(88, 107, 138),
-
-		-- Buttons
-		ButtonOutline = Color(88, 107, 138),
-		ButtonBackground = Color(38, 57, 78),
-		ButtonHover = Color(58, 77, 98),
-
-		CodeBackground = Color(45, 45, 45)
-	}
-
-	GProfiler.Config.MenuCommands = {
-		Chat = '!gprofiler', -- False to disable
-		Console = 'gprofiler', -- False to disable
-		Closekey = KEY_F4 -- False to disable
-	}
-end
+GProfiler.Config.MenuCommands = {
+	Chat = '!gprofiler', -- False to disable
+	Console = 'gprofiler', -- False to disable
+	Closekey = KEY_F4 -- False to disable
+}

@@ -58,9 +58,7 @@ function GProfiler.Hooks:StartProfiler(ply)
 		end
 	end
 
-	hook.Add = function(hookName, receiverName, receiverFunc, ...)
-		profileHook(hookName, receiverName, receiverFunc, ...)
-	end
+	hook.Add = profileHook
 end
 
 function GProfiler.Hooks:RestoreHooks(ply)
@@ -74,7 +72,7 @@ function GProfiler.Hooks:RestoreHooks(ply)
 
 	for hookName, hookReceivers in pairs(hook.GetTable()) do
 		for receiverName, receiverFunc in pairs(hookReceivers) do
-			if type(receiverName) ~= "string" or type(receiverFunc) ~= "function" then continue end
+			if not isstring(receiverName) or not isfunction(receiverFunc) then continue end
 			local data = HooksProfiler.ProfileData[string.format("%s_%s", hookName, receiverName)]
 			if data then
 				hook.Add(hookName, receiverName, data.f, unpack(data.extra or {}))

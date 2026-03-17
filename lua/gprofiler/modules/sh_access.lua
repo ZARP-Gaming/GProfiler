@@ -1,10 +1,6 @@
 GProfiler.Access.AdminSystem = GProfiler.Access.AdminSystem or false
 
-local function GlobalExists(name)
-	local exists = false
-	pcall(function() exists = _G[name] and true or false end)
-	return exists
-end
+local function GlobalExists(name) return _G[name] != nil end
 
 local AdminSystems = {
 	["FAdmin"] = {
@@ -77,7 +73,6 @@ function GProfiler.Access.FindAdminSystem()
 	for name, system in SortedPairsByMemberValue(AdminSystems, "Priority") do
 		if system.IsAvailable() then
 			GProfiler.Access.AdminSystem = system
-			GProfiler.Log("Found admin system: " .. name, 2)
 			return
 		end
 	end
@@ -85,26 +80,23 @@ function GProfiler.Access.FindAdminSystem()
 	GProfiler.Access.AdminSystem = false
 end
 
-function GProfiler.Access.RegisterPrivilege(name)
-	if not GProfiler.Access.AdminSystem then
-		GProfiler.Log("No admin system found, cannot register privilege: " .. name, 3)
-		return
-	end
-
-	if GProfiler.Access.AdminSystem.RegisterPrivilege then
-		GProfiler.Access.AdminSystem.RegisterPrivilege(name)
-	end
-end
-
 hook.Add("Initialize", "GProfiler.Access.Register", function()
 	GProfiler.Access.FindAdminSystem()
-	GProfiler.Access.RegisterPrivilege("gprofiler")
+
+	if GProfiler.Access.AdminSystem then
+		GProfiler.Access.AdminSystem.RegisterPrivilege("gprofiler")
+	end
 end)
 
 function GProfiler.Access.HasAccess(ply)
 	if GetGlobalBool("gprofiler_lan", false) then return true end
+
 	if ply:EntIndex() == 0 then return true end -- Console
+
+	if GProfiler.Config.AllowSuperAdmin and ply:IsSuperAdmin() then return true end
 	if GProfiler.Config.AllowedSteamIDs[ply:SteamID64()] or GProfiler.Config.AllowedSteamIDs[ply:SteamID()] then return true end
+
 	if not GProfiler.Access.AdminSystem then return false end
+
 	return GProfiler.Access.AdminSystem.CheckAccess(ply, "gprofiler")
 end

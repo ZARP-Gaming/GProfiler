@@ -1,4 +1,5 @@
 GProfiler.Menu = GProfiler.Menu or {}
+
 local Menu = GProfiler.Menu
 Menu.Tabs = Menu.Tabs or {}
 Menu.Background = Menu.Background or nil
@@ -32,7 +33,7 @@ function GProfiler.Menu:Open()
 	MenuBackground:SetMouseInputEnabled(false)
 	MenuBackground.Paint = function(s, w, h)
 		-- RNDX.DrawBlur(0, 0, w, h, nil, nil, nil, nil, nil, (ScrW() - (ScrW() * 0.79)) / 2)
-		RNDX.Draw(4, 0, 0, w, h, Color(0, 0, 0, 100)) -- better than eating fps
+		RNDX.Draw(4, 0, 0, w, h, MenuColors.Black100) -- better than eating fps
 	end
 	if GProfiler.Config.MenuCommands.Closekey then
 		MenuBackground.Think = function(s)
@@ -255,18 +256,3 @@ local function CreateFonts()
 end
 CreateFonts()
 hook.Add("OnScreenSizeChanged", "GProfiler.Menu.RescaleFonts", CreateFonts)
-
-net.Receive("GProfiler.SendState", function()
-	local count = net.ReadUInt(4)
-	for i = 1, count do
-		local Profiler = net.ReadString()
-		local StartedAt = net.ReadFloat()
-
-		local Tbl = GProfiler[Profiler]
-		if not Tbl then continue end
-
-		Tbl.ProfileActive = true
-		Tbl.Realm = "Server"
-		Tbl.StartTime = SysTime() - StartedAt
-	end
-end)
