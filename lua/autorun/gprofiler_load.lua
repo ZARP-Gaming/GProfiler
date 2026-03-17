@@ -32,7 +32,7 @@ local function incFolder(folder, subFileOnly, fileOnly)
 	GProfiler.Log(string.format("Loading folder %s", folder), 5)
 
 	local files, folders = file.Find(folder.."/*", "LUA")
-	for _, f in ipairs(files) do incFile(string.format("%s/%s", folder, f)) end
+	for _, f in SortedPairs(files, CLIENT) do incFile(string.format("%s/%s", folder, f)) end
 
 	if fileOnly then return end
 	for _, f in ipairs(folders) do incFolder(folder.."/"..f, nil, subFileOnly) end
@@ -40,10 +40,7 @@ end
 
 incFile("gprofiler/sv_init.lua")
 incFile("gprofiler/sh_config.lua")
-incFile("gprofiler/sh_utils.lua")
-incFile("gprofiler/cl_language.lua")
 incFile("gprofiler/cl_menu.lua")
-incFile("gprofiler/sh_access.lua")
 incFolder("gprofiler/modules")
 incFolder("gprofiler/profilers", true)
 

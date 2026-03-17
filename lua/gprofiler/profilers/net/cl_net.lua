@@ -1,9 +1,9 @@
 GProfiler.Net = GProfiler.Net or {}
 local Net = GProfiler.Net
 
-Net.StartTime = Net.StartTime or 0
-Net.EndTime = Net.EndTime or 0
 Net.Realm = Net.Realm or "Client"
+
+local NetStore = GProfiler.Profilers.GetStore("Networking")
 
 local function FormatBits(bits)
 	if not bits or bits < 0.01 then return "0 Bytes" end
@@ -22,9 +22,13 @@ end
 
 function GProfiler.Net.DoTab(Base, Outer)
 	local Header = GProfiler.Utils.SetupHeader(Outer, "Networking", "gprofiler/network.png")
-	local StartStop = Header:SetupStartStop(Net.ProfileActive)
-	local RealmSelector = Header:SetupRealmSelector(Net.Realm == "Client")
-	local Timer = Header:SetupTimer(Net)
+	local initialActive = Net.Realm == "Both" and (NetStore:IsActive("Client") or NetStore:IsActive("Server")) or NetStore:IsActive(Net.Realm)
+	local StartStop = Header:SetupStartStop(initialActive)
+	local RealmSelector = Header:SetupRealmSelector(Net.Realm, true)
+	local Timer = Header:SetupTimer(function()
+		local realm = Net.Realm == "Both" and "Client" or Net.Realm
+		return NetStore:GetTimerData(realm)
+	end)
 
 	Base:SetPos(GProfiler.GetScaledSize(10), Header:GetTall() + GProfiler.GetScaledSize(12))
 	Base:SetSize(Outer:GetWide() - GProfiler.GetScaledSize(20), Outer:GetTall() - Header:GetTall() - GProfiler.GetScaledSize(22))
@@ -35,38 +39,25 @@ function GProfiler.Net.DoTab(Base, Outer)
 	end
 
 	function StartStop:OnStateChanged(Running)
-		Net.ProfileActive = Running
-
-		if not Net.ProfileActive then
-			Net.EndTime = SysTime()
-
-			if Net.Realm == "Client" then
-				GProfiler.Net:RestoreNet()
-			else
-				net.Start("GProfiler_Net_ToggleServerProfile")
-				net.WriteBool(false)
-				net.SendToServer()
-			end
-		else
-			Net.StartTime = SysTime()
-			Net.EndTime = 0
-			Net.ProfileData = {}
-
-			if Net.Realm == "Client" then
-				GProfiler.Net:StartProfiler()
-			else
-				net.Start("GProfiler_Net_ToggleServerProfile")
-				net.WriteBool(true)
-				net.SendToServer()
-			end
-		end
+		GProfiler.Profilers.Toggle("Networking", Net.Realm, Running)
 
 		if Net.RefreshUI then
 			Net.RefreshUI()
 		end
 	end
 
-	function RealmSelector:OnStateChanged(state) Net.Realm = state end
+	function RealmSelector:OnStateChanged(state)
+		Net.Realm = state
+		if state == "Both" then
+			StartStop.State = NetStore:IsActive("Client") or NetStore:IsActive("Server")
+		else
+			StartStop.State = NetStore:IsActive(state)
+		end
+		StartStop:SetText(StartStop.State and "Stop" or "Start")
+		if Net.RefreshUI then
+			Net.RefreshUI()
+		end
+	end
 
 	local left, right = GProfiler.Utils.VSplitPanel(Base, GProfiler.GetScaledSize(10), "net_lr", 0.65)
 	local Results, Receivers = GProfiler.Utils.HSplitPanel(left, GProfiler.GetScaledSize(10), "net_l_bt", 0.65)
@@ -447,7 +438,9 @@ function GProfiler.Net.DoTab(Base, Outer)
 	function ResultsList:OnRowSelected(rowIndex, row)
 		ReceivedList:ClearSelection()
 		local name = row:GetColumnText(1)
-		local data = GProfiler.Net.ProfileData.Out and GProfiler.Net.ProfileData.Out[name]
+		local displayRealm = Net.Realm == "Both" and "Client" or Net.Realm
+		local realmData = NetStore:GetData(displayRealm) or {}
+		local data = realmData.Out and realmData.Out[name]
 
 		if data then
 			BreakdownPanel:Clear()
@@ -488,7 +481,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 				RichText:SetText("Failed to load source (2)")
 			end
 
-			if Net.Realm == "Client" then
+			if displayRealm == "Client" then
 				local breakdownData = GProfiler.Net.Breakdowns and GProfiler.Net.Breakdowns[name]
 				if breakdownData then
 					PopulateBreakdown(name, breakdownData.Children or {}, data.Size or data[7] or 0)
@@ -511,7 +504,9 @@ function GProfiler.Net.DoTab(Base, Outer)
 	function ReceivedList:OnRowSelected(rowIndex, row)
 		ResultsList:ClearSelection()
 		local name = row:GetColumnText(1)
-		local data = GProfiler.Net.ProfileData.Inc and GProfiler.Net.ProfileData.Inc[name]
+		local displayRealm = Net.Realm == "Both" and "Client" or Net.Realm
+		local realmData = NetStore:GetData(displayRealm) or {}
+		local data = realmData.Inc and realmData.Inc[name]
 
 		if data then
 			BreakdownPanel:Clear()
@@ -557,9 +552,12 @@ function GProfiler.Net.DoTab(Base, Outer)
 	local function PopulateResults()
 		if not IsValid(ResultsList) or not IsValid(ReceivedList) then return end
 
+		local displayRealm = Net.Realm == "Both" and "Client" or Net.Realm
+		local realmData = NetStore:GetData(displayRealm) or {}
+
 		ResultsList:Clear()
-		if GProfiler.Net.ProfileData.Out then
-			for name, data in pairs(GProfiler.Net.ProfileData.Out) do
+		if realmData.Out then
+			for name, data in pairs(realmData.Out) do
 				ResultsList:AddLine(
 					name,
 					data.Count or data[1] or 0,
@@ -573,8 +571,8 @@ function GProfiler.Net.DoTab(Base, Outer)
 		end
 
 		ReceivedList:Clear()
-		if GProfiler.Net.ProfileData.Inc then
-			for name, data in pairs(GProfiler.Net.ProfileData.Inc) do
+		if realmData.Inc then
+			for name, data in pairs(realmData.Inc) do
 				ReceivedList:AddLine(
 					name,
 					data.Count or data[1] or 0,
@@ -714,18 +712,21 @@ function GProfiler.Net.DoTab(Base, Outer)
 	net.SendToServer()
 end
 GProfiler.Menu.RegisterTab("Networking", "gprofiler/network.png", 2, GProfiler.Net.DoTab, function()
-	if Net.StartTime == 0 then return end
-	return GProfiler.TimeRunning(Net.StartTime, Net.EndTime, Net.ProfileActive), Net.ProfileActive
+	if not NetStore then return end
+	local timer = NetStore:GetTimerData(Net.Realm)
+	if timer.StartTime == 0 then return end
+	return GProfiler.TimeRunning(timer.StartTime, timer.EndTime, timer.ProfileActive), timer.ProfileActive
 end)
 
 net.Receive("GProfiler_Net_SendData", function()
 	local isIncoming = net.ReadBool()
 	local count = net.ReadUInt(32)
 
-	if not GProfiler.Net.ProfileData.Inc then GProfiler.Net.ProfileData.Inc = {} end
-	if not GProfiler.Net.ProfileData.Out then GProfiler.Net.ProfileData.Out = {} end
+	local serverData = NetStore:GetData("Server") or {}
+	if not serverData.Inc then serverData.Inc = {} end
+	if not serverData.Out then serverData.Out = {} end
 
-	local target = isIncoming and GProfiler.Net.ProfileData.Inc or GProfiler.Net.ProfileData.Out
+	local target = isIncoming and serverData.Inc or serverData.Out
 	table.Empty(target)
 
 	for i=1, count do
@@ -742,6 +743,8 @@ net.Receive("GProfiler_Net_SendData", function()
 		data.AverageTime = net.ReadFloat()
 		target[name] = data
 	end
+
+	NetStore:SetData("Server", serverData)
 
 	if GProfiler.Net.RefreshUI then
 		GProfiler.Net.RefreshUI()

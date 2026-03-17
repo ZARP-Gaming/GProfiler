@@ -9,13 +9,12 @@ local SysTime = SysTime
 local unpack = unpack
 local debug = debug
 
-function GProfiler.Hooks:StartProfiler(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or HooksProfiler.IsDetoured then return end
+local function StartDetour()
+	if HooksProfiler.IsDetoured then return end
 
 	GProfiler.Log((SERVER and "Server" or "Client") .. " hook profiler started!", 2)
 	HooksProfiler.ProfileData = {}
 	HooksProfiler.IsDetoured = true
-	HooksProfiler.ProfileStarted = SysTime()
 	HooksProfiler.AddHook = HooksProfiler.AddHook or hook.Add
 
 	local function profileHook(hookName, receiverName, receiverFunc, ...)
@@ -61,12 +60,11 @@ function GProfiler.Hooks:StartProfiler(ply)
 	hook.Add = profileHook
 end
 
-function GProfiler.Hooks:RestoreHooks(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or not HooksProfiler.IsDetoured then return end
+local function StopDetour()
+	if not HooksProfiler.IsDetoured then return end
 
-	GProfiler.Log((SERVER and "Server" or "Client") .. " hook profile stopped, sending data!", 2)
+	GProfiler.Log((SERVER and "Server" or "Client") .. " hook profile stopped!", 2)
 	HooksProfiler.IsDetoured = false
-	HooksProfiler.ProfileStarted = nil
 
 	hook.Add = HooksProfiler.AddHook
 
@@ -80,16 +78,16 @@ function GProfiler.Hooks:RestoreHooks(ply)
 		end
 	end
 
-	if CLIENT then return end
-
 	for k, v in pairs(HooksProfiler.ProfileData) do
 		if v.c == 0 then
 			HooksProfiler.ProfileData[k] = nil
 		end
 	end
+end
 
+local function SendData(ply)
 	local Count = table.Count(HooksProfiler.ProfileData)
-	if GProfiler.ExpressAvailable() and Count > GProfiler.Config.ExpressMinimumResults-1 and Count > 0 then
+	if GProfiler.ExpressAvailable() and Count > GProfiler.Config.ExpressMinimumResults - 1 and Count > 0 then
 		local Data = {}
 		for k, v in pairs(HooksProfiler.ProfileData) do
 			Data[k] = v
@@ -116,30 +114,26 @@ function GProfiler.Hooks:RestoreHooks(ply)
 	end
 end
 
+GProfiler.Profilers.Register("Hooks", {
+	Realms = { "Client", "Server" },
+	OnStart = function(realm, ply)
+		StartDetour()
+	end,
+	OnStop = function(realm, ply)
+		StopDetour()
+		if SERVER and ply then
+			SendData(ply)
+		end
+	end,
+	WriteData = function(realm, ply)
+		SendData(ply)
+	end
+})
+
 if SERVER then
-	util.AddNetworkString("GProfiler_Hooks_ToggleServerProfile")
-	util.AddNetworkString("GProfiler_Hooks_ServerProfileStatus")
 	util.AddNetworkString("GProfiler_Hooks_SendData")
 	util.AddNetworkString("GProfiler_Hooks_HookTbl")
 	util.AddNetworkString("GProfiler_Hooks_RemoveHook")
-
-	net.Receive("GProfiler_Hooks_ToggleServerProfile", function(len, ply)
-		if not GProfiler.Access.HasAccess(ply) then return end
-
-		if net.ReadBool() then
-			GProfiler.Hooks:StartProfiler(ply)
-			net.Start("GProfiler_Hooks_ServerProfileStatus")
-			net.WriteBool(true)
-			net.WriteEntity(ply)
-			net.Broadcast()
-		else
-			GProfiler.Hooks:RestoreHooks(ply)
-			net.Start("GProfiler_Hooks_ServerProfileStatus")
-			net.WriteBool(false)
-			net.WriteEntity(ply)
-			net.Broadcast()
-		end
-	end)
 
 	net.Receive("GProfiler_Hooks_HookTbl", function(len, ply)
 		if not GProfiler.Access.HasAccess(ply) then return end

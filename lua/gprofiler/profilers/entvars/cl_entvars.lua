@@ -1,5 +1,8 @@
 GProfiler.EntVars = GProfiler.EntVars or {}
 
+GProfiler.Profilers.Register("Entity Variables", {})
+local EntVarsStore = GProfiler.Profilers.GetStore("Entity Variables")
+
 function GProfiler.EntVars.DoTab(Content)
 
 end

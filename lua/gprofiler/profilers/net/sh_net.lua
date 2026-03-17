@@ -167,15 +167,13 @@ local function RestoreOutgoing()
 	GProfiler.Net.CurrentMsg = nil
 end
 
-function GProfiler.Net:StartProfiler(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or GProfiler.Net.IsDetoured then return end
+local function StartDetour()
+	if GProfiler.Net.IsDetoured then return end
 
 	GProfiler.Log((SERVER and "Server" or "Client") .. " net profiler started!", 2)
 	GProfiler.Net.ProfileData = { Inc = {}, Out = {} }
 	GProfiler.Net.Breakdowns = {}
-
 	GProfiler.Net.IsDetoured = true
-	GProfiler.Net.ProfileStarted = SysTime()
 
 	GProfiler.Net.OriginalIncoming = GProfiler.Net.OriginalIncoming or net.Incoming
 
@@ -221,12 +219,11 @@ function GProfiler.Net:StartProfiler(ply)
 	DetourOutgoing()
 end
 
-function GProfiler.Net:RestoreNet(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or not GProfiler.Net.IsDetoured then return end
+local function StopDetour()
+	if not GProfiler.Net.IsDetoured then return end
 
-	GProfiler.Log((SERVER and "Server" or "Client") .. " net profile stopped, sending data!", 2)
+	GProfiler.Log((SERVER and "Server" or "Client") .. " net profile stopped!", 2)
 	GProfiler.Net.IsDetoured = false
-	GProfiler.Net.ProfileStarted = nil
 
 	net.Incoming = GProfiler.Net.OriginalIncoming
 	RestoreOutgoing()
@@ -234,12 +231,12 @@ function GProfiler.Net:RestoreNet(ply)
 	if GProfiler.Net.RefreshUI then
 		GProfiler.Net.RefreshUI()
 	end
+end
 
-	if CLIENT then return end
-
+local function SendNetData(ply)
 	local function SendData(dataMap, isIncoming)
 		local count = table.Count(dataMap)
-		if GProfiler.ExpressAvailable() and count > GProfiler.Config.ExpressMinimumResults-1 and count > 0 then
+		if GProfiler.ExpressAvailable() and count > GProfiler.Config.ExpressMinimumResults - 1 and count > 0 then
 			local Data = {}
 			for k, v in pairs(dataMap) do
 				Data[tostring(k)] = {
@@ -274,32 +271,36 @@ function GProfiler.Net:RestoreNet(ply)
 	SendData(GProfiler.Net.ProfileData.Out, false)
 end
 
+GProfiler.Profilers.Register("Networking", {
+	Realms = { "Client", "Server" },
+	OnStart = function(realm, ply)
+		StartDetour()
+	end,
+	OnStop = function(realm, ply)
+		StopDetour()
+		if CLIENT then
+			local NetStore = GProfiler.Profilers.GetStore("Networking")
+			if NetStore then
+				NetStore:SetData(realm, {
+					Inc = GProfiler.Net.ProfileData.Inc,
+					Out = GProfiler.Net.ProfileData.Out
+				})
+			end
+		end
+		if SERVER and ply then
+			SendNetData(ply)
+		end
+	end,
+	WriteData = function(realm, ply)
+		SendNetData(ply)
+	end
+})
+
 if SERVER then
-	util.AddNetworkString("GProfiler_Net_ToggleServerProfile")
-	util.AddNetworkString("GProfiler_Net_ServerProfileStatus")
 	util.AddNetworkString("GProfiler_Net_SendData")
 	util.AddNetworkString("GProfiler_Net_RequestBreakdown")
 	util.AddNetworkString("GProfiler_Net_SendBreakdown")
 	util.AddNetworkString("GProfiler_Net_ReceiverTbl")
-	util.AddNetworkString("GProfiler_NetTest")
-
-	net.Receive("GProfiler_Net_ToggleServerProfile", function(len, ply)
-		if not GProfiler.Access.HasAccess(ply) then return end
-
-		if net.ReadBool() then
-			GProfiler.Net:StartProfiler(ply)
-			net.Start("GProfiler_Net_ServerProfileStatus")
-			net.WriteBool(true)
-			net.WriteEntity(ply)
-			net.Broadcast()
-		else
-			GProfiler.Net:RestoreNet(ply)
-			net.Start("GProfiler_Net_ServerProfileStatus")
-			net.WriteBool(false)
-			net.WriteEntity(ply)
-			net.Broadcast()
-		end
-	end)
 
 	net.Receive("GProfiler_Net_ReceiverTbl", function(len, ply)
 		if not GProfiler.Access.HasAccess(ply) then return end
@@ -323,13 +324,13 @@ if SERVER then
 		local breakdownData = GProfiler.Net.Breakdowns[name]
 
 		net.Start("GProfiler_Net_SendBreakdown")
-		net.WriteString(name) -- TODO: assign an network id for these!
+		net.WriteString(name)
 		if breakdownData then
 			net.WriteBool(true)
 			net.WriteUInt(breakdownData.Size, 32)
 
 			local function WriteNode(node)
-				net.WriteString(node.Func) -- ^
+				net.WriteString(node.Func)
 				net.WriteUInt(node.Size, 32)
 				net.WriteUInt(#node.Children, 16)
 				for _, child in ipairs(node.Children) do

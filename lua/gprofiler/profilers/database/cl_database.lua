@@ -1,5 +1,7 @@
 GProfiler.Database = GProfiler.Database or {}
 
+local DatabaseStore = GProfiler.Profilers.GetStore("Database")
+
 function GProfiler.Database.DoTab(Content)
 
 end

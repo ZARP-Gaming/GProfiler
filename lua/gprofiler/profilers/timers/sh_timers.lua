@@ -1,13 +1,6 @@
--- -- For timers, we must detour instantly, as there is no way to get timers created before the detour was created.
--- -- rubat please timer.GetList
+GProfiler.Timers = GProfiler.Timers or {}
 
--- GProfiler.Timers = GProfiler.Timers or {}
--- GProfiler.Timers.Simple = GProfiler.Timers.Simple or {}
--- GProfiler.Timers.Create = GProfiler.Timers.Create or {}
--- GProfiler.Timers.IsDetoured = GProfiler.Timers.IsDetoured or false
--- GProfiler.Timers.OldSimpleTimer = GProfiler.Timers.OldSimpleTimer or timer.Simple
--- GProfiler.Timers.OldCreateTimer = GProfiler.Timers.OldCreateTimer or timer.Create
--- GProfiler.ActiveTimers = GProfiler.ActiveTimers or { Simple = {}, Create = {} }
+GProfiler.Profilers.Register("Timers", {})
 
 -- local chunkSizeLimit = 65535
 

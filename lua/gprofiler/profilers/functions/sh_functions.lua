@@ -24,7 +24,6 @@ local function garbage() -- need to experiment more, which is more accurate? bra
 	return collectgarbage("count") * 1024
 end
 
--- Hacky solution for functions from the same location but have different signatures
 local function CombineDuplicates()
 	local combined = {}
 	for k, v in pairs(FunctionsProfiler.ProfileData) do
@@ -118,13 +117,12 @@ local function onEvent(event)
 	end
 end
 
-function GProfiler.Functions:StartProfiler(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or FunctionsProfiler.IsDetoured then return end
+local function StartDetour()
+	if FunctionsProfiler.IsDetoured then return end
 
 	GProfiler.Log((SERVER and "Server" or "Client") .. " function profiler started!", 2)
 	FunctionsProfiler.ProfileData = {}
 	FunctionsProfiler.IsDetoured = true
-	FunctionsProfiler.ProfileStarted = SysTime()
 
 	recurse = {}
 	startTimes = {}
@@ -132,18 +130,17 @@ function GProfiler.Functions:StartProfiler(ply)
 	debug.sethook(onEvent, "cr")
 end
 
-function GProfiler.Functions:RestoreFunctions(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or not FunctionsProfiler.IsDetoured then return end
+local function StopDetour()
+	if not FunctionsProfiler.IsDetoured then return end
 
-	GProfiler.Log((SERVER and "Server" or "Client") .. " function profile stopped, sending data!", 2)
+	GProfiler.Log((SERVER and "Server" or "Client") .. " function profile stopped!", 2)
 	FunctionsProfiler.IsDetoured = false
-	FunctionsProfiler.ProfileStarted = nil
 
 	debug.sethook()
 	CombineDuplicates()
+end
 
-	if CLIENT then return end
-
+local function SendData(ply)
 	local Count = table.Count(FunctionsProfiler.ProfileData)
 	if GProfiler.ExpressAvailable() and Count > (GProfiler.Config.ExpressMinimumResults or 25) - 1 and Count > 0 then
 		local Data = {}
@@ -210,38 +207,38 @@ function GProfiler.Functions:RestoreFunctions(ply)
 	end
 end
 
-if SERVER then
-	util.AddNetworkString("GProfiler_Functions_ToggleServerProfile")
-	util.AddNetworkString("GProfiler_Functions_ServerProfileStatus")
-	util.AddNetworkString("GProfiler_Functions_SendData")
+GProfiler.Profilers.Register("Functions", {
+	Realms = { "Client", "Server" },
+	OnStart = function(realm, ply)
+		StartDetour()
+	end,
+	OnStop = function(realm, ply)
+		StopDetour()
+		if SERVER and ply then
+			SendData(ply)
+		end
+	end,
+	WriteData = function(realm, ply)
+		SendData(ply)
+	end
+})
 
-	net.Receive("GProfiler_Functions_ToggleServerProfile", function(len, ply)
+if SERVER then
+	util.AddNetworkString("GProfiler_Functions_SendData")
+	util.AddNetworkString("GProfiler_Functions_SetFocus")
+
+	net.Receive("GProfiler_Functions_SetFocus", function(len, ply)
 		if not GProfiler.Access.HasAccess(ply) then return end
 
-		local startStop = net.ReadBool()
-		if startStop then
-			local hasFocus = net.ReadBool()
-			if hasFocus then
-				local count = net.ReadUInt(5)
-				FunctionsProfiler.Focus = {}
-				for i = 1, count do
-					FunctionsProfiler.Focus[net.ReadString()] = true
-				end
-			else
-				FunctionsProfiler.Focus = false
+		local hasFocus = net.ReadBool()
+		if hasFocus then
+			local count = net.ReadUInt(5)
+			FunctionsProfiler.Focus = {}
+			for i = 1, count do
+				FunctionsProfiler.Focus[net.ReadString()] = true
 			end
-
-			GProfiler.Functions:StartProfiler(ply)
-			net.Start("GProfiler_Functions_ServerProfileStatus")
-			net.WriteBool(true)
-			net.WriteEntity(ply)
-			net.Broadcast()
 		else
-			GProfiler.Functions:RestoreFunctions(ply)
-			net.Start("GProfiler_Functions_ServerProfileStatus")
-			net.WriteBool(false)
-			net.WriteEntity(ply)
-			net.Broadcast()
+			FunctionsProfiler.Focus = false
 		end
 	end)
 end

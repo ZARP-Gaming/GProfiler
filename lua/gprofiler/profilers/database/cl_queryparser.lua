@@ -1,3 +1,5 @@
+GProfiler.Database = GProfiler.Database or {}
+
 local MySQLKeywords = {
   ["ACCESSIBLE"] = "Ensures table alterations are compatible with storage engines.",
   ["ACCOUNT"] = "Used in security statements to manage user accounts (e.g., LOCK/UNLOCK).",

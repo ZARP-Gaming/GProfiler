@@ -1,5 +1,7 @@
 GProfiler.Timers = GProfiler.Timers or {}
 
+local TimersStore = GProfiler.Profilers.GetStore("Timers")
+
 function GProfiler.Timers.DoTab(Content)
 
 end

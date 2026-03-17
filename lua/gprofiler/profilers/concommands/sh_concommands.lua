@@ -15,14 +15,13 @@ function GProfiler.ConCommands.GetFunction(cmd, tbl)
 	return dbgInfo.short_src, dbgInfo.linedefined, dbgInfo.lastlinedefined
 end
 
-function GProfiler.ConCommands:StartProfiler(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or GProfiler.ConCommands.IsDetoured then return end
+local function StartDetour()
+	if GProfiler.ConCommands.IsDetoured then return end
 
 	GProfiler.Log((SERVER and "Server" or "Client") .. " commands profiler started!", 2)
 	GProfiler.ConCommands.OldRun = GProfiler.ConCommands.OldRun or concommand.Run
 	GProfiler.ConCommands.ProfileData = {}
 	GProfiler.ConCommands.IsDetoured = true
-	GProfiler.ConCommands.ProfileStarted = SysTime()
 
 	concommand.Run = function(ply, cmd, ...)
 		local start = SysTime()
@@ -51,55 +50,49 @@ function GProfiler.ConCommands:StartProfiler(ply)
 	end
 end
 
-function GProfiler.ConCommands:RestoreCommands(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) or not GProfiler.ConCommands.IsDetoured then return end
+local function StopDetour()
+	if not GProfiler.ConCommands.IsDetoured then return end
 
-	GProfiler.Log((SERVER and "Server" or "Client") .. " commands profile stopped, sending data!", 2)
+	GProfiler.Log((SERVER and "Server" or "Client") .. " commands profile stopped!", 2)
 	GProfiler.ConCommands.IsDetoured = false
-	GProfiler.ConCommands.ProfileStarted = nil
-
 	concommand.Run = GProfiler.ConCommands.OldRun
-
-	if SERVER then
-		net.Start("GProfiler_ConCommands_SendData")
-			net.WriteUInt(table.Count(GProfiler.ConCommands.ProfileData), 32)
-			for k, v in pairs(GProfiler.ConCommands.ProfileData) do
-				net.WriteString(k)
-				net.WriteUInt(v.Count, 32)
-				net.WriteFloat(v.Time)
-				net.WriteFloat(v.AverageTime)
-				net.WriteFloat(v.LongestTime)
-				net.WriteString(v.Source)
-				net.WriteUInt(v.Lines[1], 16)
-				net.WriteUInt(v.Lines[2], 16)
-			end
-		net.Send(ply)
-	end
 end
 
+local function SendData(ply)
+	net.Start("GProfiler_ConCommands_SendData")
+		net.WriteUInt(table.Count(GProfiler.ConCommands.ProfileData), 32)
+		for k, v in pairs(GProfiler.ConCommands.ProfileData) do
+			net.WriteString(k)
+			net.WriteUInt(v.Count, 32)
+			net.WriteFloat(v.Time)
+			net.WriteFloat(v.AverageTime)
+			net.WriteFloat(v.LongestTime)
+			net.WriteString(v.Source)
+			net.WriteUInt(v.Lines[1], 16)
+			net.WriteUInt(v.Lines[2], 16)
+		end
+	net.Send(ply)
+end
+
+GProfiler.Profilers.Register("Commands", {
+	Realms = { "Client", "Server" },
+	OnStart = function(realm, ply)
+		StartDetour()
+	end,
+	OnStop = function(realm, ply)
+		StopDetour()
+		if SERVER and ply then
+			SendData(ply)
+		end
+	end,
+	WriteData = function(realm, ply)
+		SendData(ply)
+	end
+})
+
 if SERVER then
-	util.AddNetworkString("GProfiler_ConCommands_ToggleServerProfile")
-	util.AddNetworkString("GProfiler_ConCommands_ServerProfileStatus")
 	util.AddNetworkString("GProfiler_ConCommands_CommandList")
 	util.AddNetworkString("GProfiler_ConCommands_SendData")
-
-	net.Receive("GProfiler_ConCommands_ToggleServerProfile", function(len, ply)
-		if not GProfiler.Access.HasAccess(ply) then return end
-
-		if net.ReadBool() then
-			GProfiler.ConCommands:StartProfiler(ply)
-			net.Start("GProfiler_ConCommands_ServerProfileStatus")
-			net.WriteBool(true)
-			net.WriteEntity(ply)
-			net.Broadcast()
-		else
-			GProfiler.ConCommands:RestoreCommands(ply)
-			net.Start("GProfiler_ConCommands_ServerProfileStatus")
-			net.WriteBool(false)
-			net.WriteEntity(ply)
-			net.Broadcast()
-		end
-	end)
 
 	net.Receive("GProfiler_ConCommands_CommandList", function(_, ply)
 		if not GProfiler.Access.HasAccess(ply) then return end

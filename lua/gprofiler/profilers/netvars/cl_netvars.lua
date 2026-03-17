@@ -1,5 +1,8 @@
 GProfiler.NetVars = GProfiler.NetVars or {}
 
+GProfiler.Profilers.Register("Network Variables", {})
+local NetVarsStore = GProfiler.Profilers.GetStore("Network Variables")
+
 function GProfiler.NetVars.DoTab(Content)
 
 end

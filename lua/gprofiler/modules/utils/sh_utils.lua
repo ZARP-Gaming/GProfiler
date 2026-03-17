@@ -146,10 +146,17 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		return Button
 	end
 
-	function Header:SetupRealmSelector(IsClient)
-		if IsClient == nil then IsClient = true end
+	function Header:SetupRealmSelector(currentState, includeBoth)
+		if isbool(currentState) then
+			currentState = currentState and "Client" or "Server"
+		end
+		currentState = currentState or "Client"
 
-		local Width = GProfiler.GetScaledSize(366)
+		local Items = {"Client", "Server"}
+		if includeBoth then table.insert(Items, "Both") end
+		local numItems = #Items
+
+		local Width = GProfiler.GetScaledSize(183) * numItems
 		local Height = Header:GetTall() * 0.65
 
 		ItemsXOffset = ItemsXOffset - Width - GProfiler.GetScaledSize(10)
@@ -158,10 +165,15 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		Selector:SetSize(Width, Height)
 		Selector:SetPos(ItemsXOffset, Header:GetTall() / 2 - Height / 2)
 
-		Selector.State = IsClient and "Client" or "Server"
-		Selector.LerpTo = Selector.State == "Client" and 0 or 1
+		local initialIndex = 1
+		for i, item in ipairs(Items) do
+			if item == currentState then initialIndex = i; break end
+		end
+
+		Selector.State = currentState
+		Selector.LerpTo = (initialIndex - 1) / math.max(1, numItems - 1)
 		Selector.LerpPos = Selector.LerpTo
-		Selector.IsClient = IsClient
+		Selector.IsClient = currentState == "Client"
 		Selector.Enabled = true
 
 		Selector.Paint = function(s, w, h)
@@ -170,18 +182,18 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 			local lerp = Lerp(0.1, Selector.LerpPos, Selector.LerpTo)
 			Selector.LerpPos = lerp
 			local Padding = 6
-			local SelectorW = w / 2 - Padding * 2
-			RNDX.Draw(6, Padding + (SelectorW * lerp), Padding, SelectorW + (Selector.LerpTo == 1 and Padding * 2 or 0), h - Padding * 2, Color(31, 79, 128, 255))
+			local SelectorW = (w - Padding * 2) / numItems
+			local SelectorX = Padding + lerp * (w - SelectorW - Padding * 2)
+			RNDX.Draw(6, SelectorX, Padding, SelectorW, h - Padding * 2, Color(31, 79, 128, 255))
 		end
 
-		local ItemW = Selector:GetWide() / 2
+		local ItemW = Selector:GetWide() / numItems
 
-		local Items = {"Client", "Server"}
-		for i = 1, 2 do
+		for i, item in ipairs(Items) do
 			local Button = vgui.Create("DButton", Selector)
 			Button:SetSize(ItemW, Selector:GetTall())
 			Button:SetPos((i - 1) * ItemW, 0)
-			Button:SetText(Items[i])
+			Button:SetText(item)
 			Button:SetFont("GProfiler.HeaderInteract")
 			Button:SetTextColor(color_white)
 			Button.Paint = nil
@@ -189,9 +201,9 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 			Button.DoClick = function()
 				if not Selector.Enabled then return end
 
-				Selector.LerpTo = i - 1
-				Selector.State = Items[i]
-				Selector.IsClient = Items[i] == "Client"
+				Selector.LerpTo = (i - 1) / math.max(1, numItems - 1)
+				Selector.State = item
+				Selector.IsClient = item == "Client"
 				if Selector.OnStateChanged then Selector:OnStateChanged(Selector.State) end
 			end
 		end
@@ -199,7 +211,8 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		return Selector
 	end
 
-	function Header:SetupTimer(profiler)
+	function Header:SetupTimer(getter)
+		local profiler = getter()
 		Timer = vgui.Create("DLabel", Header)
 		Timer:SetFont("GProfiler.HeaderInteract")
 		Timer:SetTextColor(color_white)
@@ -215,8 +228,8 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		end
 
 		function Timer:Think()
-			if not profiler.ProfileActive then return end
-			self:SetText(GProfiler.TimeRunning(profiler.StartTime or 0, profiler.EndTime or 0, true) .. "s")
+			local p = getter()
+			self:SetText(GProfiler.TimeRunning(p.StartTime or 0, p.EndTime or 0, p.ProfileActive) .. "s")
 		end
 
 		return Timer
