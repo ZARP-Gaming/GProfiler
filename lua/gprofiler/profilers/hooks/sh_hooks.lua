@@ -121,6 +121,12 @@ GProfiler.Profilers.Register("Hooks", {
 	end,
 	OnStop = function(realm, ply)
 		StopDetour()
+		if CLIENT then
+			local HookStore = GProfiler.Profilers.GetStore("Hooks")
+			if HookStore then
+				HookStore:SetData(realm, HooksProfiler.ProfileData)
+			end
+		end
 		if SERVER and ply then
 			SendData(ply)
 		end
@@ -144,6 +150,9 @@ if SERVER then
 		for hookName, hookReceivers in pairs(hooks) do
 			net.WriteString(hookName)
 			net.WriteUInt(table.Count(hookReceivers), 10)
+			for receiverName, _ in pairs(hookReceivers) do
+				net.WriteString(tostring(receiverName or ""))
+			end
 		end
 		net.Send(ply)
 	end)

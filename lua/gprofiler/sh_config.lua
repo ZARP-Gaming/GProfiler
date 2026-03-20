@@ -18,6 +18,9 @@ GProfiler.Config.AllowedSteamIDs = { -- SteamIDs that can access GProfiler
 
 GProfiler.Config.AllowSuperAdmin = false -- Allow players with superadmin (Player:IsSuperAdmin()) to access GProfiler regardless of other checks.
 
+-- todo, requires a lot of changes probably
+-- GProfiler.Config.AlwaysAllowClient = false -- Allow clients to use GProfiler (limited to client realm/cannot view sources, etc)
+
 --[[
 	If express is available, we use it over gmod's net library
 	This can handle larger data sizes, and we shouldn't need to worry about overflowing the buffer

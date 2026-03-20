@@ -89,8 +89,6 @@ function Profilers.Register(name, opts)
 		OnDataReceived = opts.OnDataReceived,
 	}
 
-	MsgC(string.format("Registered profiler '%s' for realms: %s\n", name, table.concat(profiler.Realms, ", ")), Color(100, 255, 100))
-
 	Profilers.Registered[name] = profiler
 	return profiler.Store
 end
