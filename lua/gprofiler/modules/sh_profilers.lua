@@ -247,6 +247,8 @@ net.Receive("GProfiler.Profiler.SyncState", function()
 end)
 
 function Profilers.Toggle(name, realm, start)
+	if not GProfiler.Access.HasAccess(LocalPlayer()) then return end
+
 	local profiler = Profilers.Get(name)
 	if not profiler then return end
 

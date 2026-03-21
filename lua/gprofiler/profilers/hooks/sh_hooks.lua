@@ -3,7 +3,6 @@ GProfiler.Hooks = GProfiler.Hooks or {}
 local HooksProfiler = GProfiler.Hooks
 HooksProfiler.IsDetoured = HooksProfiler.IsDetoured or false
 HooksProfiler.ProfileData = HooksProfiler.ProfileData or {}
-HooksProfiler.RestoreHookTable = HooksProfiler.RestoreHookTable or {}
 
 local SysTime = SysTime
 local unpack = unpack

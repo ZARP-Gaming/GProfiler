@@ -81,6 +81,12 @@ GProfiler.Profilers.Register("Commands", {
 	end,
 	OnStop = function(realm, ply)
 		StopDetour()
+		if CLIENT then
+			local CmdStore = GProfiler.Profilers.GetStore("Commands")
+			if CmdStore then
+				CmdStore:SetData(realm, GProfiler.ConCommands.ProfileData)
+			end
+		end
 		if SERVER and ply then
 			SendData(ply)
 		end

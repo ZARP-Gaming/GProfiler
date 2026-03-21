@@ -5,7 +5,7 @@ Hooks.Realm = Hooks.Realm or "Client"
 local HooksStore = GProfiler.Profilers.GetStore("Hooks")
 
 function GProfiler.Hooks.DoTab(Base, Outer)
-local Header = GProfiler.Utils.SetupHeader(Outer, "Hooks", "gprofiler/hooks.png")
+	local Header = GProfiler.Utils.SetupHeader(Outer, "Hooks", "gprofiler/hooks.png")
 	local initialActive = Hooks.Realm == "Both" and (HooksStore:IsActive("Client") or HooksStore:IsActive("Server")) or HooksStore:IsActive(Hooks.Realm)
 	local StartStop = Header:SetupStartStop(initialActive)
 	local RealmSelector = Header:SetupRealmSelector(Hooks.Realm, true)
@@ -238,6 +238,12 @@ local Header = GProfiler.Utils.SetupHeader(Outer, "Hooks", "gprofiler/hooks.png"
 
 	net.Start("GProfiler_Hooks_HookTbl")
 	net.SendToServer()
+
+	Results.OnHandleMoved = function()
+		ResultsList:SetSize(Results:GetWide(), Results:GetTall() - Header:GetTall())
+		ResultsList:SetPos(0, Header:GetTall())
+		Header:SetWide(Results:GetWide())
+	end
 end
 
 GProfiler.Menu.RegisterTab("Hooks", "gprofiler/hooks.png", 1, Hooks.DoTab, function()
