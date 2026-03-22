@@ -214,6 +214,12 @@ GProfiler.Profilers.Register("Functions", {
 	end,
 	OnStop = function(realm, ply)
 		StopDetour()
+		if CLIENT then
+			local FuncStore = GProfiler.Profilers.GetStore("Functions")
+			if FuncStore then
+				FuncStore:SetData(realm, FunctionsProfiler.ProfileData)
+			end
+		end
 		if SERVER and ply then
 			SendData(ply)
 		end

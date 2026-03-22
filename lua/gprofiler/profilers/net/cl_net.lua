@@ -632,7 +632,6 @@ function GProfiler.Net.DoTab(Base, Outer)
 	net.SendToServer()
 end
 GProfiler.Menu.RegisterTab("Networking", "gprofiler/network.png", 2, GProfiler.Net.DoTab, function()
-	if not NetStore then return end
 	local timer = NetStore:GetTimerData(Net.Realm)
 	if timer.StartTime == 0 then return end
 	return GProfiler.TimeRunning(timer.StartTime, timer.EndTime, timer.ProfileActive), timer.ProfileActive

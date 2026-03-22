@@ -4,7 +4,7 @@ local ConCommands = GProfiler.ConCommands
 local CommandsStore = GProfiler.Profilers.GetStore("Commands")
 
 function GProfiler.ConCommands.DoTab(Base, Outer)
-local Header = GProfiler.Utils.SetupHeader(Outer, "Commands", "gprofiler/hooks.png")
+local Header = GProfiler.Utils.SetupHeader(Outer, "Commands", "gprofiler/commands.png")
 	local initialActive = ConCommands.Realm == "Both" and (CommandsStore:IsActive("Client") or CommandsStore:IsActive("Server")) or CommandsStore:IsActive(ConCommands.Realm)
 	local StartStop = Header:SetupStartStop(initialActive)
 	local RealmSelector = Header:SetupRealmSelector(ConCommands.Realm, true)
@@ -234,7 +234,6 @@ local Header = GProfiler.Utils.SetupHeader(Outer, "Commands", "gprofiler/hooks.p
 end
 
 GProfiler.Menu.RegisterTab("Commands", "gprofiler/commands.png", 4, GProfiler.ConCommands.DoTab, function()
-	if not CommandsStore then return end
 	local timer = CommandsStore:GetTimerData(GProfiler.ConCommands.Realm)
 	if timer.StartTime == 0 then return end
 	return GProfiler.TimeRunning(timer.StartTime, timer.EndTime, timer.ProfileActive), timer.ProfileActive

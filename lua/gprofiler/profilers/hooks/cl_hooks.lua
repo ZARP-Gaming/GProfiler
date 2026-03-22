@@ -247,7 +247,6 @@ function GProfiler.Hooks.DoTab(Base, Outer)
 end
 
 GProfiler.Menu.RegisterTab("Hooks", "gprofiler/hooks.png", 1, Hooks.DoTab, function()
-	if not HooksStore then return end
 	local timer = HooksStore:GetTimerData(Hooks.Realm)
 	if timer.StartTime == 0 then return end
 	return GProfiler.TimeRunning(timer.StartTime, timer.EndTime, timer.ProfileActive), timer.ProfileActive
