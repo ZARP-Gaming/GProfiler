@@ -28,7 +28,9 @@ function MySQLOOProvider:SetupConnectionHook()
 end
 
 function MySQLOOProvider:DetourQueryFunction(objectData)
-	objectData.oldQueryFunc = objectData.object[self.QueryFunction]
+	local originalFunc = objectData.object[self.QueryFunction]
+	objectData.oldQueryFunc = originalFunc
+	objectData.profilingFunc = originalFunc
 
 	objectData.object[self.QueryFunction] = function(obj, queryText, ...)
 		local source = debug.getinfo(3) or debug.getinfo(2)
@@ -62,14 +64,14 @@ function MySQLOOProvider:DetourQueryFunction(objectData)
 end
 
 function MySQLOOProvider:EnableSQLProfiling(objectData)
-	if not objectData.oldQueryFunc then return end
+	if not objectData.profilingFunc then return end
 
-	local hasProfilingQuery = objectData.oldQueryFunc(objectData.object, "SHOW VARIABLES LIKE 'have_profiling'")
+	local hasProfilingQuery = objectData.profilingFunc(objectData.object, "SHOW VARIABLES LIKE 'have_profiling'")
 	hasProfilingQuery.onSuccess = function(Q, D)
 		if table.Count(D or {}) == 0 then return end
 		if D[1].Value == "YES" then
 			objectData.hasProfiling = true
-			local enable = objectData.oldQueryFunc(objectData.object, "SET profiling_history_size = 250, profiling = 1;")
+			local enable = objectData.profilingFunc(objectData.object, "SET profiling_history_size = 250, profiling = 1;")
 			enable:start()
 		end
 	end
@@ -77,19 +79,19 @@ function MySQLOOProvider:EnableSQLProfiling(objectData)
 end
 
 function MySQLOOProvider:DisableSQLProfiling(objectData)
-	if objectData.hasProfiling and objectData.oldQueryFunc then
-		local disable = objectData.oldQueryFunc(objectData.object, "SET profiling_history_size = 0, profiling = 0;")
+	if objectData.hasProfiling and objectData.profilingFunc then
+		local disable = objectData.profilingFunc(objectData.object, "SET profiling_history_size = 0, profiling = 0;")
 		disable:start()
 	end
 end
 
 function MySQLOOProvider:ExecuteExplainQuery(explainQuery, objectData, queryId)
-	if not objectData.oldQueryFunc then
+	if not objectData.profilingFunc then
 		GProfiler.Database.Explains[queryId] = { noExplain = true }
 		return
 	end
 
-	local query = objectData.oldQueryFunc(objectData.object, explainQuery)
+	local query = objectData.profilingFunc(objectData.object, explainQuery)
 	local data = {}
 
 	query.onData = function(Q, D)
@@ -108,12 +110,12 @@ function MySQLOOProvider:ExecuteExplainQuery(explainQuery, objectData, queryId)
 end
 
 function MySQLOOProvider:GetObjectProfilingData(objectData, callback)
-	if not objectData.hasProfiling or not objectData.oldQueryFunc then
+	if not objectData.hasProfiling or not objectData.profilingFunc then
 		callback(nil)
 		return
 	end
 
-	local query = objectData.oldQueryFunc(objectData.object, "SHOW PROFILES")
+	local query = objectData.profilingFunc(objectData.object, "SHOW PROFILES")
 	local data = {}
 
 	query.onData = function(Q, D)
@@ -130,7 +132,7 @@ function MySQLOOProvider:GetObjectProfilingData(objectData, callback)
 		local waitingFor = 0
 
 		for _, profile in pairs(data) do
-			local profileQuery = objectData.oldQueryFunc(objectData.object, "SHOW PROFILE FOR QUERY " .. profile.Query_ID)
+			local profileQuery = objectData.profilingFunc(objectData.object, "SHOW PROFILE FOR QUERY " .. profile.Query_ID)
 			local pdata = {}
 
 			profileQuery.onData = function(Q, D)

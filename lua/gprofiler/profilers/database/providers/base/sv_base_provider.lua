@@ -72,8 +72,8 @@ function BaseProvider:StartProfiling()
 			continue
 		end
 
-		self:EnableSQLProfiling(v)
 		self:DetourQueryFunction(v)
+		self:EnableSQLProfiling(v)
 	end
 end
 

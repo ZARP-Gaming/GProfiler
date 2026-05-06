@@ -18,6 +18,8 @@ local IDLookup = {
 	["sqlite"] = 4
 }
 
+local SendData
+
 local function StartDetour(realm, ply)
 	GProfiler.Log("Server database profiler started!", 2)
 
@@ -57,16 +59,18 @@ local function StopDetour(realm, ply)
 
 			if providersToWaitFor == 0 then
 				GProfiler.Database.InternalProfileData = allProfilingData
+				SendData(realm, ply)
 			end
 		end)
 	end
 
 	if providersToWaitFor == 0 then
 		GProfiler.Database.InternalProfileData = allProfilingData
+		SendData(realm, ply)
 	end
 end
 
-local function SendData(realm, ply)
+SendData = function(realm, ply)
 	if not IsValid(ply) then return end
 
 	if table.Count(GProfiler.Database.ProfileData) == 0 then
@@ -183,7 +187,7 @@ end
 
 util.AddNetworkString("GProfiler_Database_SendData")
 
-Profilers.Register("Database", { -- move to shared when UI for this is done again
+Profilers.Register("Database", {
 	Realms = { "Server" },
 	ServerOnly = true,
 	OnStart = StartDetour,

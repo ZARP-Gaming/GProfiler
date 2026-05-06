@@ -25,14 +25,14 @@ function SQLiteProvider:DetourQueryFunction(objectData)
 	for _, method in ipairs(self.QueryMethods) do
 		if not objectData.object[method] then continue end
 
-		objectData.oldQueryFuncs[method] = objectData.object[method]
+		local originalFunc = objectData.object[method]
+		objectData.oldQueryFuncs[method] = originalFunc
 
 		objectData.object[method] = function(queryText, ...)
-			-- print("running query through detour", method, queryText)
 			local source = debug.getinfo(2)
 			local queryId = self:GetQueryId(queryText .. source.short_src .. tostring(source.linedefined) .. tostring(source.lastlinedefined))
 			local startTime = SysTime()
-			local result = objectData.oldQueryFuncs[method](queryText, ...)
+			local result = originalFunc(queryText, ...)
 
 			self:ProcessQueryResult(queryText, startTime, queryId, source)
 

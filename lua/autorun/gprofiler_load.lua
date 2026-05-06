@@ -20,7 +20,8 @@ end
 local incFuncs = {
 	sv = SERVER and include or function() end,
 	cl = SERVER and AddCSLuaFile or include,
-	sh = function(f) include(f) AddCSLuaFile(f) end
+	sh = function(f) include(f) AddCSLuaFile(f) end,
+	nl = function() end
 }
 
 local function incFile(f)
