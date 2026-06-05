@@ -1,11 +1,114 @@
 # 📊 GProfiler
 
-![5ff7cc30167bc88ef7848cbf6c712033](https://github.com/user-attachments/assets/57a36dd8-5829-407b-8041-da8015b234a0)
-![20ad6324fb5bda7eb0d1fd655a4294be](https://github.com/user-attachments/assets/47e4ded9-524d-4ea9-9230-244f15060f94)
-![fb59788812ac7de7e2e320abc23ad92b](https://github.com/user-attachments/assets/0f222263-9010-4876-9551-fdc2ff2021e8)
-![b3e8c1d2f2db42c0a481d7b2601ab781](https://github.com/user-attachments/assets/b757bfce-a68f-46c9-84d7-4b7163294a3c)
-![fefb989827e3e7af005a4ea2fb7f2bfb](https://github.com/user-attachments/assets/4ba2f782-5299-43c4-988d-626d73a4d1f8)
-![758e7672ed29e3acd633a4826ed5578f](https://github.com/user-attachments/assets/489d4171-4c06-49c2-a481-0330f58bc322)
-![fc934fdc3a3f8116a187c6bebae03060](https://github.com/user-attachments/assets/0cfaeead-c9f1-4249-ae9b-30c679b7f42d)
-![a690e160c76c9a36b61f675e232cac57](https://github.com/user-attachments/assets/77b19c50-b726-443f-925b-2ff5310f3606)
-![b60f6548f7c8c11297aeffa32699886a](https://github.com/user-attachments/assets/62fb0c2d-3224-44dc-9fad-4d60b96ec1dc)
+## 📑 Contents
+
+- [Overview Tab](#-overview-tab)
+- [Profilers](#-profilers)
+	- [Hooks](#-hook-profiler)
+	- [Network](#-net-profiler)
+	- [Functions](#️-function-profiler)
+	- [Commands](#️-commands-profiler)
+	- [Timers](#️-timer-profiler)
+	- [Entity Variables](#-entity-variables-profiler)
+	- [Network Variables](#-network-variables-profiler)
+	- [Database](#️-database-profiler)
+- [Configuration](#-configuration)
+
+---
+
+## 🏠 Overview Tab
+
+<p align="center">
+	<img src=".github/images/overview.png" alt="Overview tab" width="800">
+</p>
+
+---
+
+## 🔬 Profilers
+
+### 🪝 Hook Profiler
+
+<p align="center">
+	<img src=".github/images/hooks.png" alt="Hook profiler" width="800">
+</p>
+
+---
+
+### 🌐 Net Profiler
+
+<p align="center">
+	<img src=".github/images/network.png" alt="Net profiler" width="800">
+</p>
+
+---
+
+### ⚙️ Function Profiler
+
+<p align="center">
+	<img src=".github/images/functions.png" alt="Function profiler" width="800">
+</p>
+
+#### Call graph
+
+Select any result to view the call tree of a single invocation: which functions it called, in order, with each child's time and share of the parent. This makes it easy to see *where* a slow function actually spends its time.
+
+> [!NOTE]
+> The call graph may provide incomplete results, or often none at all. It's an experimental idea I had, and can be a bit janky
+
+#### Focus
+
+You can set a list of functions to limit the profiling results to, making it easy to focus on a small set of functions at a time, while discarding other data
+
+---
+
+### 🖥️ Commands Profiler
+
+<p align="center">
+	<img src=".github/images/commands.png" alt="Commands profiler" width="800">
+</p>
+
+---
+
+### ⏱️ Timer Profiler
+
+<p align="center">
+	<img src=".github/images/timers.png" alt="Timer profiler" width="800">
+</p>
+
+---
+
+### 📦 Entity Variables Profiler
+
+<p align="center">
+	<img src=".github/images/entvars.png" alt="Entity variables profiler" width="800">
+</p>
+
+---
+
+### 🔗 Network Variables Profiler
+
+
+<p align="center">
+	<img src=".github/images/netvars.png" alt="Network variables profiler" width="800">
+</p>
+
+---
+
+### 🗄️ Database Profiler
+
+
+<p align="center">
+	<img src=".github/images/database.png" alt="Database profiler" width="800">
+</p>
+
+- **EXPLAIN** gives into how the database executes a query: the execution plan, index usage, table scans and other factors, so you can see where inefficiencies lie.
+- **PROFILE** gives a detailed execution breakdown showing what the server was doing at each step and how long each step took.
+
+> [!NOTE]
+> Both of the above is only available for databases running through MySQL, and all data is provided by MySQL
+
+---
+
+## 🔧 Configuration
+
+All configuration lives in `lua/gprofiler/sh_config.lua`, this is where you can configure who can use GProfiler, language, etc. Players whos SteamID's are in `GProfiler.Config.AllowedSteamIDs` can use GProfiler.

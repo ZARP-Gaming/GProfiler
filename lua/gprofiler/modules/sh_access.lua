@@ -91,10 +91,14 @@ end)
 function GProfiler.Access.HasAccess(ply)
 	if GetGlobalBool("gprofiler_lan", false) then return true end
 
-	if CLIENT and not IsValid(ply) then ply = LocalPlayer() end
+	if CLIENT and not IsValid(ply) then
+		ply = LocalPlayer()
+		if not IsValid(ply) then return false end
+	end
 
-	if SERVER and (not IsValid(ply) or ply:EntIndex() == 0) then return true end
-	if not IsValid(ply) then return false end -- Console
+	if SERVER and (not IsValid(ply) or ply:EntIndex() == 0) then return true end -- Console
+
+	if hook.Run("GProfiler.Access.CanAccess", ply) then return true end
 
 	if GProfiler.Config.AllowSuperAdmin and ply:IsSuperAdmin() then return true end
 	if GProfiler.Config.AllowedSteamIDs[ply:SteamID64()] or GProfiler.Config.AllowedSteamIDs[ply:SteamID()] then return true end
