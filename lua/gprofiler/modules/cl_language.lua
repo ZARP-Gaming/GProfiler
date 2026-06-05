@@ -1,3 +1,5 @@
+-- TODO: v2 currently uses none of this
+
 GProfiler.Language = GProfiler.Language or {}
 GProfiler.Language.Langs = GProfiler.Language.Langs or {}
 

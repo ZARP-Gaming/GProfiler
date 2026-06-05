@@ -175,6 +175,7 @@ end)
 
 surface.CreateFont("GProfiler.Graph.Title", { font = "Roboto", size = 20, weight = 500, antialias = true })
 surface.CreateFont("GProfiler.Graph.ValueLarge", { font = "Roboto", size = 32, weight = 800, antialias = true })
+surface.CreateFont("GProfiler.Graph.Small", { font = "Roboto", size = 14, weight = 500, antialias = true })
 
 local graphBg = Color(16, 16, 24)
 local graphTitle = Color(220, 220, 220)
@@ -351,22 +352,33 @@ function PANEL:Paint(w, h)
 		end
 	end
 
-	local rightX = w - 72
+	local rightX = w - 16 - (#self.Data * 28) - 8
 
 	for i, seg in ipairs(self.Data) do
 		local val = seg.queue:Get(seg.queue:Length() - 1)
 		if not val then val = 0 end
 
-		local txt = string.format("%.2f", val)
-		if seg.formatter then txt = seg.formatter(val) end
+		local fmt = seg.formatter or function(v) return string.format("%.2f", v) end
+		local fullText = fmt(val) .. " " .. (seg.suffix or "")
 
-		local fullText = txt .. " " .. (seg.suffix or "")
+		surface.SetFont("GProfiler.Graph.Title")
+		local valW = surface.GetTextSize(fullText)
 
-		local labelX = rightX
-		if i == 1 then labelX = rightX end
+		local statTxt, statW = nil, 0
+		if seg.queue:Length() > 1 then
+			statTxt = string.format("min %s   avg %s   max %s", fmt(seg.queue:Min()), fmt(seg.queue:Average()), fmt(seg.queue:Max()))
+			surface.SetFont("GProfiler.Graph.Small")
+			statW = surface.GetTextSize(statTxt)
+		end
 
-		draw.SimpleText(fullText, "GProfiler.Graph.Title", labelX, 14, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		rightX = rightX - surface.GetTextSize(fullText) - 8
+		local colW = math.max(valW, statW)
+
+		draw.SimpleText(fullText, "GProfiler.Graph.Title", rightX, 16, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		if statTxt then
+			draw.SimpleText(statTxt, "GProfiler.Graph.Small", rightX, 42, Color(seg.color.r, seg.color.g, seg.color.b, 170), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		end
+
+		rightX = rightX - colW - 28
 	end
 
 	if self.PinBtn and self.PinBtn:IsVisible() then
