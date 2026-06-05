@@ -106,11 +106,12 @@ function Timers.CollectTimerData(type, name, delay, func, funcTime)
 end
 
 local function assertType(value, check, num, expect)
-	assert(check(value), string.format("bad argument #%d (%s expected, got %s)", num, expect, type(value)))
+	assert(check(value), string.format("bad argument #%d (%s expected, got %s (%s))", num, expect, type(value), tostring(value)))
 	return true
 end
 
 timer.Simple = function(delay, func, ...)
+	delay = tonumber(delay or 0)
 	if not assertType(delay, isnumber, 1, "number") or not assertType(func, isfunction, 2, "function") then return end
 
 	local Index = delay != 0 and table.insert(ActiveTimers.Simple, {NextRun = SysTime() + delay, Source = debug.getinfo(2)})
