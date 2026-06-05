@@ -253,6 +253,7 @@ function PANEL:Think()
 	if self.Data[1] and not self.InitialSizeLoaded then
 		self.InitialSizeLoaded = true
 		local savedSize = cookie.GetNumber("gprofiler_graph_" .. self:GetTitle() .. "_size", self.Data[1].queue:Length())
+		savedSize = math.Max(savedSize, 32)
 		self.HistorySlider:SetValue(savedSize)
 		self:ResizeQueues(savedSize)
 	end
