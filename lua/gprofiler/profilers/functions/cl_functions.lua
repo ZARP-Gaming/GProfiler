@@ -17,15 +17,20 @@ local function ValidateFocus(foc)
 	return string.StartWith(foc or "", "function: 0x") or string.StartWith(foc or "", "0x")
 end
 
+local function NormFocus(v)
+	local ptr = string.match(v or "", "0x%x+")
+	return ptr and ("function: " .. ptr) or v
+end
+
 local function SendFocus()
 	if Functions.Realm == "Server" or Functions.Realm == "Both" then
-		local focus = GetFocus()
+		local focus = Functions.ActiveFocus["Server"] or {}
 		net.Start("GProfiler_Functions_SetFocus")
 		if not table.IsEmpty(focus) then
 			net.WriteBool(true)
 			net.WriteUInt(#focus, 5)
 			for _, v in ipairs(focus) do
-				net.WriteString(v)
+				net.WriteString(NormFocus(v))
 			end
 		else
 			net.WriteBool(false)
@@ -164,10 +169,10 @@ function GProfiler.Functions.DoTab(Base, Outer)
 
 	function StartStop:OnStateChanged(Running)
 		if Running and (Functions.Realm == "Client" or Functions.Realm == "Both") then
-			local focus = GetFocus()
+			local focus = Functions.ActiveFocus["Client"] or {}
 			GProfiler.Functions.Focus = {}
 			for _, v in ipairs(focus) do
-				GProfiler.Functions.Focus[v] = true
+				GProfiler.Functions.Focus[NormFocus(v)] = true
 			end
 			if table.IsEmpty(focus) then
 				GProfiler.Functions.Focus = false
