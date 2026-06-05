@@ -68,7 +68,7 @@ function GProfiler.Utils.Graphs.ConstantLengthNumericalQueue(capacity)
 end
 
 function GProfiler.Utils.Graphs.Render(x, y, w, h, title, visualMax, mainIcon, segments, isPinned)
-	draw.RoundedBox(8, x, y, w, h, Color(16, 16, 24, isPinned and 200 or 255))
+	GProfiler.RNDX.DrawScaled(8, x, y, w, h, Color(16, 16, 24, isPinned and 200 or 255))
 
 	local titleX = x + 16
 	if mainIcon then
@@ -173,10 +173,6 @@ hook.Add("HUDPaint", "GProfiler.Graphs.Pinned", function() -- TODO: Scaling/Only
 	end
 end)
 
-surface.CreateFont("GProfiler.Graph.Title", { font = "Roboto", size = 20, weight = 500, antialias = true })
-surface.CreateFont("GProfiler.Graph.ValueLarge", { font = "Roboto", size = 32, weight = 800, antialias = true })
-surface.CreateFont("GProfiler.Graph.Small", { font = "Roboto", size = 14, weight = 500, antialias = true })
-
 local graphBg = Color(16, 16, 24)
 local graphTitle = Color(220, 220, 220)
 local poly = {
@@ -192,6 +188,8 @@ AccessorFunc(PANEL, "m_fVisualMax", "VisualMax", FORCE_NUMBER)
 AccessorFunc(PANEL, "m_MainIcon", "Icon")
 
 function PANEL:Init()
+	local RNDX = GProfiler.RNDX
+
 	self.Data = {}
 	self:SetTitle("Graph")
 	self:SetVisualMax(1)
@@ -212,10 +210,10 @@ function PANEL:Init()
 		self:ResizeQueues(math.Round(val))
 	end
 	self.HistorySlider.Slider.Paint = function(s, w, h)
-		draw.RoundedBox(4, 0, h / 2 - 2, w, 4, Color(60, 60, 70))
+		RNDX.DrawScaled(4, 0, h / 2 - 2, w, 4, Color(60, 60, 70))
 	end
 	self.HistorySlider.Slider.Knob.Paint = function(s, w, h)
-		draw.RoundedBox(8, 0, 0, w, h, Color(220, 220, 220))
+		RNDX.DrawScaled(8, 0, 0, w, h, Color(220, 220, 220))
 	end
 	self.HistorySlider:SetVisible(false)
 
@@ -288,7 +286,7 @@ function PANEL:SetMainIcon(iconMat)
 end
 
 function PANEL:Paint(w, h)
-	draw.RoundedBox(8, 0, 0, w, h, graphBg)
+	GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, graphBg)
 
 	local titleX = 16
 	if self.MainIcon then
@@ -373,9 +371,11 @@ function PANEL:Paint(w, h)
 
 		local colW = math.max(valW, statW)
 
-		draw.SimpleText(fullText, "GProfiler.Graph.Title", rightX, 16, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		local x = 16
+		draw.SimpleText(fullText, "GProfiler.Graph.Title", rightX, x, seg.color, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 		if statTxt then
-			draw.SimpleText(statTxt, "GProfiler.Graph.Small", rightX, 42, Color(seg.color.r, seg.color.g, seg.color.b, 170), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+			x = x + draw.GetFontHeight("GProfiler.Graph.Title")
+			draw.SimpleText(statTxt, "GProfiler.Graph.Small", rightX, x, Color(seg.color.r, seg.color.g, seg.color.b, 170), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 		end
 
 		rightX = rightX - colW - 28

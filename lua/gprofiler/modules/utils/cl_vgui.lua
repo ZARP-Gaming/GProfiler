@@ -34,10 +34,10 @@ function GProfiler.Utils.CreateList(Parent, Header, Columns)
 	sbar:SetWide(GProfiler.GetScaledSize(12))
 	sbar:SetHideButtons(true)
 	sbar.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 10))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 10))
 	end
 	sbar.btnGrip.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 20))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 20))
 	end
 
 	for k, v in ipairs(ResultsList.Columns) do
@@ -45,14 +45,14 @@ function GProfiler.Utils.CreateList(Parent, Header, Columns)
 		v.Header:SetTextColor(color_white)
 		local isLast = v == ResultsList.Columns[#ResultsList.Columns]
 		v.Header.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(64, 105, 146), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(64, 105, 146), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
 			if not isLast then
 				surface.SetDrawColor(Color(255, 255, 255, 20))
 				surface.DrawRect(w - 1, 0, 1, h)
 			end
 
 			if s:IsHovered() then
-				GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 20), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
+				GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 20), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
 			end
 
 			if ResultsList.SortedBy == k then
@@ -72,19 +72,23 @@ function GProfiler.Utils.CreateList(Parent, Header, Columns)
 					break
 				end
 			end
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, isEven and Color(255, 255, 255, 10) or Color(255, 255, 255, 2))
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, isEven and Color(255, 255, 255, 10) or Color(255, 255, 255, 2))
 
 			if s:IsHovered() then
-				GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 20))
+				GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 20))
 			end
 
 			if s:IsLineSelected() then
-				GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 30))
+				GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 30))
 			end
 		end
 		for _, col in pairs(line.Columns) do
 			col:SetFont("GProfiler.Inter24")
 			col:SetTextColor(Color(255, 255, 255, 200))
+		end
+		local oldSetSize = line.SetSize
+		line.SetSize = function(s, w, h)
+			oldSetSize(s, w, draw.GetFontHeight("GProfiler.Inter24") + GProfiler.GetScaledSize(12))
 		end
 		return line
 	end
@@ -92,8 +96,8 @@ function GProfiler.Utils.CreateList(Parent, Header, Columns)
 	local sbar = ResultsList.VBar
 	sbar:SetWide(GProfiler.GetScaledSize(12))
 	sbar:SetHideButtons(true)
-	sbar.Paint = function(s, w, h) GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 10)) end
-	sbar.btnGrip.Paint = function(s, w, h) GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 20)) end
+	sbar.Paint = function(s, w, h) GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 10)) end
+	sbar.btnGrip.Paint = function(s, w, h) GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 20)) end
 
 	return ResultsList
 end

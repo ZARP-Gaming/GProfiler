@@ -70,7 +70,7 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 	local Header = vgui.Create("DPanel", Outer)
 	Header:SetSize(Outer:GetWide(), GProfiler.GetScaledSize(Sub and 50 or 100))
 	Header.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(8, 0, 0, w, h, Color(34, 77, 122, 255), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
+		GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, Color(34, 77, 122, 255), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
 	end
 
 	local IconPanel
@@ -81,8 +81,8 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		IconPanel:SetSize(GProfiler.GetScaledSize(64), GProfiler.GetScaledSize(64))
 		IconPanel:SetPos(GProfiler.GetScaledSize(20), Header:GetTall() / 2 - IconPanel:GetTall() / 2)
 		IconPanel.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(22, 50, 80, 255))
-			GProfiler.RNDX.Draw(4, 2, 2, w - 4, h - 4, Color(26, 59, 94, 255))
+			GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(22, 50, 80, 255))
+			GProfiler.RNDX.DrawScaled(4, 2, 2, w - 4, h - 4, Color(26, 59, 94, 255))
 			surface.SetDrawColor(255, 255, 255, 255)
 			surface.SetMaterial(IconMat)
 			surface.DrawTexturedRect(w / 2 - IconSize / 2, h / 2 - IconSize / 2, IconSize, IconSize)
@@ -118,9 +118,9 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		Button:SetTextColor(color_white)
 		Button:SetFont("GProfiler.HeaderInteract")
 		Button.Paint = function(s, w, h)
-			RNDX.Draw(6, 0, 0, w, h, Color(18, 46, 74, 255))
+			RNDX.DrawScaled(6, 0, 0, w, h, Color(18, 46, 74, 255))
 			if s:IsHovered() then
-				RNDX.Draw(6, 0, 0, w, h, Color(0, 0, 0, 50))
+				RNDX.DrawScaled(6, 0, 0, w, h, Color(0, 0, 0, 50))
 			end
 		end
 
@@ -177,14 +177,14 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		Selector.Enabled = true
 
 		Selector.Paint = function(s, w, h)
-			RNDX.Draw(6, 0, 0, w, h, Color(18, 46, 74, 255))
+			RNDX.DrawScaled(6, 0, 0, w, h, Color(18, 46, 74, 255))
 
 			local lerp = Lerp(0.1, Selector.LerpPos, Selector.LerpTo)
 			Selector.LerpPos = lerp
-			local Padding = 6
+			local Padding = GProfiler.GetScaledSize(6)
 			local SelectorW = (w - Padding * 2) / numItems
 			local SelectorX = Padding + lerp * (w - SelectorW - Padding * 2)
-			RNDX.Draw(6, SelectorX, Padding, SelectorW, h - Padding * 2, Color(31, 79, 128, 255))
+			RNDX.DrawScaled(6, SelectorX, Padding, SelectorW, h - Padding * 2, Color(31, 79, 128, 255))
 		end
 
 		local ItemW = Selector:GetWide() / numItems

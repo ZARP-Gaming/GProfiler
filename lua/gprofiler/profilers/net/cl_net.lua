@@ -30,6 +30,8 @@ function GProfiler.Net.DoTab(Base, Outer)
 		return NetStore:GetTimerData(realm)
 	end)
 
+	local RNDX = GProfiler.RNDX
+
 	Base:SetPos(GProfiler.GetScaledSize(10), Header:GetTall() + GProfiler.GetScaledSize(12))
 	Base:SetSize(Outer:GetWide() - GProfiler.GetScaledSize(20), Outer:GetTall() - Header:GetTall() - GProfiler.GetScaledSize(22))
 	Base.OnHandleMoved = function()
@@ -73,7 +75,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 	SourceHeader:SetText("Select a network message to view source.")
 
 	Source.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+		GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 	end
 
 	local RichText = vgui.Create("RichText", Source)
@@ -101,7 +103,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 		pnl:Dock(FILL)
 		pnl:DockMargin(0, 0, 0, 0)
 		pnl.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 			draw.SimpleText("Select a network message to view breakdown.", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
@@ -136,7 +138,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 		Canvas:Dock(TOP)
 		Canvas:SetTall(0)
 		Canvas.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background)
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, GProfiler.SyntaxColors.background)
 		end
 
 		local function GetParts(funcName, arg, size)
@@ -232,9 +234,9 @@ function GProfiler.Net.DoTab(Base, Outer)
 		local iconSize = GProfiler.GetScaledSize(16)
 
 		Canvas.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+			GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 
-			draw.RoundedBox(0, 0, 0, GProfiler.GetScaledSize(30), h, GProfiler.SyntaxColors.background)
+			RNDX.DrawScaled(0, 0, 0, GProfiler.GetScaledSize(30), h, GProfiler.SyntaxColors.background)
 			surface.SetDrawColor(GProfiler.SyntaxColors.lineSep)
 			surface.DrawRect(GProfiler.GetScaledSize(30), 0, 1, h)
 
@@ -369,7 +371,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 			Loading:Dock(FILL)
 			Loading:DockMargin(0, 0, 0, 0)
 			Loading.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+				GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 				draw.SimpleText("Loading breakdown...", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 			Loading:SetTall(BreakdownPanel:GetTall())
@@ -435,7 +437,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 			Header:Dock(FILL)
 			Header:DockMargin(0, 0, 0, 0)
 			Header.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+				GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 				draw.SimpleText("Breakdown only available for sent messages", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 			Header:SetTall(BreakdownPanel:GetTall())
@@ -514,7 +516,7 @@ function GProfiler.Net.DoTab(Base, Outer)
 		local HeaderPanel = vgui.Create("DPanel", Parent)
 		HeaderPanel:SetSize(Parent:GetWide(), GProfiler.GetScaledSize(50))
 		HeaderPanel.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(8, 0, 0, w, h, Color(34, 77, 122), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
+			GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, Color(34, 77, 122), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
 			draw.SimpleText(Title, "GProfiler.Inter28", GProfiler.GetScaledSize(10), h / 2, GProfiler.SyntaxColors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
@@ -525,9 +527,9 @@ function GProfiler.Net.DoTab(Base, Outer)
 		RefreshButton:SetFont("GProfiler.Inter24")
 		RefreshButton:SetTextColor(Color(0,0,0,0))
 		RefreshButton.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 20))
+			GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 20))
 			if s:IsHovered() then
-				GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 20))
+				GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 20))
 			end
 			draw.SimpleText("Refresh", "GProfiler.Inter24", w / 2, h / 2, GProfiler.SyntaxColors.text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
@@ -545,10 +547,10 @@ function GProfiler.Net.DoTab(Base, Outer)
 		ScrollBar:SetWide(GProfiler.GetScaledSize(12))
 		ScrollBar:SetHideButtons(true)
 		ScrollBar.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 10))
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 10))
 		end
 		ScrollBar.btnGrip.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 20))
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 20))
 		end
 
 		for k, Receiver in ipairs(Receivers) do
@@ -563,13 +565,13 @@ function GProfiler.Net.DoTab(Base, Outer)
 			Item:SetTextColor(Color(0,0,0,0))
 			Item.Paint = function(s, w, h)
 				if i % 2 == 0 then
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 10))
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 10))
 				else
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 2))
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 2))
 				end
 
 				if s:IsHovered() then
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 20))
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 20))
 				end
 
 				draw.SimpleText(Receiver.Name, "GProfiler.Inter24", GProfiler.GetScaledSize(10), h / 2, GProfiler.SyntaxColors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)

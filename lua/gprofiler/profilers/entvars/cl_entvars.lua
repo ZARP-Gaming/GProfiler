@@ -44,7 +44,7 @@ function GProfiler.EntVars.DoTab(Base, Outer)
 	local ResultsList = GProfiler.Utils.CreateList(Base, Header, {"Entity", "Variable", "Times Changed", "Current Value"})
 	ResultsList:SetTall(Base:GetTall() - Header:GetTall())
 	ResultsList.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(38, 63, 89, 255))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(38, 63, 89, 255))
 	end
 
 	local function PopulateResults()

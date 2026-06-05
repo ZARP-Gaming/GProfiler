@@ -55,7 +55,7 @@ function GProfiler.Hooks.DoTab(Base, Outer)
 	SourceHeader:SetText("Select a hook to view source.")
 
 	Source.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+		GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 	end
 
 	local RichText = vgui.Create("RichText", Source)
@@ -128,7 +128,7 @@ function GProfiler.Hooks.DoTab(Base, Outer)
 		local HeaderPanel = vgui.Create("DPanel", Parent)
 		HeaderPanel:SetSize(Parent:GetWide(), GProfiler.GetScaledSize(50))
 		HeaderPanel.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(8, 0, 0, w, h, Color(34, 77, 122), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
+			GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, Color(34, 77, 122), GProfiler.RNDX.NO_BL + GProfiler.RNDX.NO_BR)
 			draw.SimpleText(Title, "GProfiler.Inter28", GProfiler.GetScaledSize(10), h / 2, GProfiler.SyntaxColors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
@@ -139,9 +139,9 @@ function GProfiler.Hooks.DoTab(Base, Outer)
 		RefreshButton:SetFont("GProfiler.Inter24")
 		RefreshButton:SetTextColor(Color(0,0,0,0))
 		RefreshButton.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 20))
+			GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 20))
 			if s:IsHovered() then
-				GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 20))
+				GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 20))
 			end
 			draw.SimpleText("Refresh", "GProfiler.Inter24", w / 2, h / 2, GProfiler.SyntaxColors.text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
@@ -159,10 +159,10 @@ function GProfiler.Hooks.DoTab(Base, Outer)
 		ScrollBar:SetWide(GProfiler.GetScaledSize(12))
 		ScrollBar:SetHideButtons(true)
 		ScrollBar.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 10))
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 10))
 		end
 		ScrollBar.btnGrip.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 20))
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 20))
 		end
 
 		for k, Receiver in ipairs(Receivers) do
@@ -177,13 +177,13 @@ function GProfiler.Hooks.DoTab(Base, Outer)
 			Item:SetTextColor(Color(0,0,0,0))
 			Item.Paint = function(s, w, h)
 				if i % 2 == 0 then
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 10))
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 10))
 				else
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 2))
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 2))
 				end
 
 				if s:IsHovered() then
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 20))
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 20))
 				end
 
 				draw.SimpleText(Receiver.Name, "GProfiler.Inter24", GProfiler.GetScaledSize(10), h / 2, GProfiler.SyntaxColors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)

@@ -354,6 +354,12 @@ function RNDX.Draw(r, x, y, w, h, col, flags)
 	return draw_rounded(x, y, w, h, col, flags, r, r, r, r)
 end
 
+-- GProfiler
+function RNDX.DrawScaled(r, x, y, w, h, col, flags)
+	r = GProfiler.GetScaledSize(r)
+	return draw_rounded(x, y, w, h, col, flags, r, r, r, r)
+end
+
 function RNDX.DrawOutlined(r, x, y, w, h, col, thickness, flags)
 	return draw_rounded(x, y, w, h, col, flags, r, r, r, r, nil, thickness or 1)
 end
@@ -535,7 +541,7 @@ local BASE_FUNCS; BASE_FUNCS = {
 		return self
 	end,
 	Color = function(self, col_or_r, g, b, a)
-		if type(col_or_r) == "number" then
+		if isnumber(col_or_r) then
 			COL_R, COL_G, COL_B, COL_A = col_or_r, g or 255, b or 255, a or 255
 		else
 			COL_R, COL_G, COL_B, COL_A = col_or_r.r, col_or_r.g, col_or_r.b, col_or_r.a
@@ -591,7 +597,7 @@ local BASE_FUNCS; BASE_FUNCS = {
 		local ncolors = 0
 		local flat = COLORS_FLAT
 
-		if argn == 1 and type(select(1, ...)) == 'table' then
+		if argn == 1 and istable(select(1, ...)) then
 			local t = select(1, ...)
 			ncolors = #t
 			for i = 1, ncolors do
@@ -604,7 +610,7 @@ local BASE_FUNCS; BASE_FUNCS = {
 			end
 		else
 			local first = select(1, ...)
-			if type(first) == 'number' then
+			if isnumber(first) then
 				ncolors = math.floor(argn / 4)
 				for i = 1, ncolors do
 					local off = (i - 1) * 4

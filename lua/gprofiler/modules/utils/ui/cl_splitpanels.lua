@@ -1,5 +1,5 @@
 local function DefaultSplitPaint(s, w, h)
-	GProfiler.RNDX.Draw(8, 0, 0, w, h, Color(38, 63, 89, 255))
+	GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, Color(38, 63, 89, 255))
 end
 
 local function CreateSplitPanel(parent, isVertical, spacing, name, initialPercentage)
@@ -67,9 +67,9 @@ local function CreateSplitPanel(parent, isVertical, spacing, name, initialPercen
 		if not s:IsHovered() and not s.isDragging then return end
 		local MenuColors = GProfiler.MenuColors
 		if isVertical then
-			GProfiler.RNDX.Draw(4, 2, 0, w - 4, h, Color(26, 53, 80))
+			GProfiler.RNDX.DrawScaled(4, 2, 0, w - 4, h, Color(26, 53, 80))
 		else
-			GProfiler.RNDX.Draw(4, 0, 2, w, h - 4, Color(26, 53, 80))
+			GProfiler.RNDX.DrawScaled(4, 0, 2, w, h - 4, Color(26, 53, 80))
 		end
 	end
 

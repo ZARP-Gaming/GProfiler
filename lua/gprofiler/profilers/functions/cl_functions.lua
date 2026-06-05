@@ -41,7 +41,7 @@ end
 
 local function StyleInput(input)
 	input.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(18, 46, 74, 255))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(18, 46, 74, 255))
 		s:DrawTextEntryText(color_white, Color(100, 150, 200), color_white)
 	end
 end
@@ -71,7 +71,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 	FocusBar:SetSize(Outer:GetWide(), GProfiler.GetScaledSize(40))
 	FocusBar:SetPos(0, Header:GetTall())
 	FocusBar.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(22, 50, 80, 200))
+		GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(22, 50, 80, 200))
 	end
 
 	local focusLbl = vgui.Create("DLabel", FocusBar)
@@ -88,7 +88,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 
 	local isValidInput = false
 	validIndicator.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, isValidInput and Color(0, 200, 80) or Color(200, 60, 60))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, isValidInput and Color(0, 200, 80) or Color(200, 60, 60))
 	end
 
 	local focusInput = vgui.Create("DTextEntry", FocusBar)
@@ -113,7 +113,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 			local chip = FocusList:Add("DPanel")
 			chip:SetTall(GProfiler.GetScaledSize(26))
 			chip.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(31, 79, 128, 255))
+				GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(31, 79, 128, 255))
 			end
 
 			local hexDisplay = string.match(focusVal, "0x%x+") or focusVal
@@ -129,7 +129,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 			removeBtn:SetPos(chiplbl:GetX() + chiplbl:GetWide() + GProfiler.GetScaledSize(4), chip:GetTall() / 2 - GProfiler.GetScaledSize(20) / 2)
 			removeBtn:SetText("")
 			removeBtn.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(80, 30, 30, s:IsHovered() and 200 or 150))
+				GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(80, 30, 30, s:IsHovered() and 200 or 150))
 				draw.SimpleText("x", "GProfiler.Inter24", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			end
 			removeBtn.DoClick = function()
@@ -216,7 +216,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 	SourceHeader:SetText("Select a function to view source.")
 
 	Source.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
+		GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_BR + GProfiler.RNDX.NO_BL)
 	end
 
 	local RichText = vgui.Create("RichText", Source)
@@ -235,7 +235,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 	FocusBtn:SetPos(GProfiler.GetScaledSize(10), Source:GetTall() - GProfiler.GetScaledSize(40))
 	FocusBtn:SetText("")
 	FocusBtn.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(31, 79, 128, s:IsHovered() and 220 or 160))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(31, 79, 128, s:IsHovered() and 220 or 160))
 		draw.SimpleText("Focus Toggle", "GProfiler.Inter24", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 	FocusBtn.DoClick = function()
@@ -255,7 +255,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 	PrintBtn:SetText("")
 	local printBtnText = "Print Details"
 	PrintBtn.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(31, 79, 128, s:IsHovered() and 220 or 160))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(31, 79, 128, s:IsHovered() and 220 or 160))
 		draw.SimpleText(printBtnText, "GProfiler.Inter24", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 	PrintBtn.DoClick = function()
@@ -292,7 +292,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 	CGHeader:SetText("Call Graph")
 
 	CallGraph.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_TL + GProfiler.RNDX.NO_TR)
+		GProfiler.RNDX.DrawScaled(8, 0, 0, w, h, GProfiler.SyntaxColors.background, GProfiler.RNDX.NO_TL + GProfiler.RNDX.NO_TR)
 	end
 
 	local currentCGTree = nil
@@ -305,7 +305,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 	CGCopyBtn:SetText("")
 	local copyBtnText = "Copy"
 	CGCopyBtn.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(31, 79, 128, s:IsHovered() and 220 or 160))
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(31, 79, 128, s:IsHovered() and 220 or 160))
 		draw.SimpleText(copyBtnText, "GProfiler.Inter24", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 	CGCopyBtn.DoClick = function()
@@ -345,7 +345,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 		local pnl = vgui.Create("DPanel", CGScroll)
 		pnl:Dock(FILL)
 		pnl.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background)
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, GProfiler.SyntaxColors.background)
 			draw.SimpleText(msg or "Select a function to view call graph.", "GProfiler.Inter24", GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(14), GProfiler.SyntaxColors.comment, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 		pnl:SetTall(CGScroll:GetTall())
@@ -417,7 +417,7 @@ function GProfiler.Functions.DoTab(Base, Outer)
 		currentCGTree = RootNodes
 
 		Canvas.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(0, 0, 0, w, h, GProfiler.SyntaxColors.background)
+			GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, GProfiler.SyntaxColors.background)
 
 			local mouseX, mouseY = s:LocalCursorPos()
 			local clicked = s.MousePressed

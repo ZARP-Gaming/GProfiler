@@ -16,7 +16,7 @@ local function CreateTimelinePanel(parent, w, h, data, currentQuery)
 	local TimelinePanel = vgui.Create("DPanel", parent)
 	TimelinePanel:SetSize(w, h)
 	TimelinePanel.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(4, 0, 0, w, h, GProfiler.SyntaxColors.background)
+		GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, GProfiler.SyntaxColors.background)
 		if s.ShowData then s:ShowData() end
 	end
 
@@ -54,10 +54,10 @@ local function CreateTimelinePanel(parent, w, h, data, currentQuery)
 			entryPanel:SetPos(startX, 0)
 			entryPanel.Lerp = 0
 			entryPanel.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(2, 0, 1, w - 2, h - 2, entryColor)
+				GProfiler.RNDX.DrawScaled(2, 0, 1, w - 2, h - 2, entryColor)
 				if s.Lerp > 0 then
 					HoverColor.a = 230 * s.Lerp
-					GProfiler.RNDX.Draw(2, 0, 1, w - 2, h - 2, HoverColor)
+					GProfiler.RNDX.DrawScaled(2, 0, 1, w - 2, h - 2, HoverColor)
 				end
 			end
 			entryPanel.Think = function(s)
@@ -105,10 +105,10 @@ function GProfiler.Database.DoTab(Base, Outer)
 	ScrollBar:SetWide(GProfiler.GetScaledSize(12))
 	ScrollBar:SetHideButtons(true)
 	ScrollBar.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 10))
+		GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 10))
 	end
 	ScrollBar.btnGrip.Paint = function(s, w, h)
-		GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(255, 255, 255, 20))
+		GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, Color(255, 255, 255, 20))
 	end
 
 	local rowH = GProfiler.GetScaledSize(30)
@@ -118,8 +118,8 @@ function GProfiler.Database.DoTab(Base, Outer)
 		local Row = vgui.Create("DPanel", QueryList)
 		Row:SetSize(QueryList:GetWide() - pad, rowH)
 		Row.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(6, 0, 0, w, h, Color(24, 58, 94, 197))
-			-- GProfiler.RNDX.Draw(6, 3, 3, w - 6, h - 6, Color(26, 55, 85, 150))
+			GProfiler.RNDX.DrawScaled(6, 0, 0, w, h, Color(24, 58, 94, 197))
+			-- GProfiler.RNDX.DrawScaled(6, 3, 3, w - 6, h - 6, Color(26, 55, 85, 150))
 		end
 		Row.Think = function(s)
 			if Database.SelectedQuery == s.QueryId then
@@ -145,8 +145,8 @@ function GProfiler.Database.DoTab(Base, Outer)
 		TimeBadge:SetSize(bw + pad, bh + GProfiler.GetScaledSize(4))
 		TimeBadge:SetPos(IdLabel:GetX() + IdLabel:GetWide() + GProfiler.GetScaledSize(5), pad + rowH / 2 - (bh + GProfiler.GetScaledSize(4)) / 2)
 		TimeBadge.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(ScoreCol.r, ScoreCol.g, ScoreCol.b, 40))
-			GProfiler.RNDX.Draw(4, 1, 1, w - 2, h - 2, Color(ScoreCol.r, ScoreCol.g, ScoreCol.b, 20))
+			GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(ScoreCol.r, ScoreCol.g, ScoreCol.b, 40))
+			GProfiler.RNDX.DrawScaled(4, 1, 1, w - 2, h - 2, Color(ScoreCol.r, ScoreCol.g, ScoreCol.b, 20))
 			draw.SimpleText(timeStr, "GProfiler.Inter24", w / 2, h / 2, ScoreCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 
@@ -173,8 +173,8 @@ function GProfiler.Database.DoTab(Base, Outer)
 		CopyBtn:SetTextColor(Color(0, 0, 0, 0))
 		CopyBtn:SetSize(CopyBtn:GetWide() + GProfiler.GetScaledSize(10), CountBadge:GetTall())
 		CopyBtn.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 10))
-			if s:IsHovered() then GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 10)) end
+			GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 10))
+			if s:IsHovered() then GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 10)) end
 			draw.SimpleText("Copy Query", "GProfiler.Inter24", w / 2, h / 2, GProfiler.SyntaxColors.text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 		CopyBtn.DoClick = function()
@@ -214,7 +214,7 @@ function GProfiler.Database.DoTab(Base, Outer)
 		TextBg:SetPos(pad, Row:GetTall())
 		TextBg:SetSize(Row:GetWide() - pad * 2, queryH + pad)
 		TextBg.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(18, 28, 39, 255))
+			GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(18, 28, 39, 255))
 		end
 
 		xoff, yoff = GProfiler.GetScaledSize(5), GProfiler.GetScaledSize(5)
@@ -244,7 +244,7 @@ function GProfiler.Database.DoTab(Base, Outer)
 				lbl.Paint = function(self, w, h)
 					self.hoverlerp = Lerp(FrameTime() * 10, self.hoverlerp, self:IsHovered() and 1 or 0)
 					if self.hoverlerp > 0 then
-						GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 50 * self.hoverlerp))
+						GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 50 * self.hoverlerp))
 					end
 				end
 			end
@@ -277,7 +277,7 @@ function GProfiler.Database.DoTab(Base, Outer)
 			Collapse:SetExpanded(false)
 			Collapse:SetAnimTime(0)
 			Collapse.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(39, 75, 113))
+				GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(39, 75, 113))
 				if rightText then
 					draw.SimpleText(rightText, "GProfiler.Inter24", w - pad, collapseH / 2, color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 				end
@@ -290,7 +290,7 @@ function GProfiler.Database.DoTab(Base, Outer)
 			local ContentPanel = vgui.Create("DPanel", Collapse)
 			ContentPanel:SetSize(Collapse:GetWide(), 0)
 			ContentPanel.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(15, 22, 30, 255), GProfiler.RNDX.NO_TL + GProfiler.RNDX.NO_TR)
+				GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(15, 22, 30, 255), GProfiler.RNDX.NO_TL + GProfiler.RNDX.NO_TR)
 			end
 			Collapse:SetContents(ContentPanel)
 
@@ -330,7 +330,7 @@ function GProfiler.Database.DoTab(Base, Outer)
 			local HeaderRow = vgui.Create("DPanel", ExplainPanel)
 			HeaderRow:SetSize(innerW, rowH)
 			HeaderRow.Paint = function(s, w, h)
-				GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 10))
+				GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 10))
 			end
 			for i, col in ipairs(Columns) do
 				local lbl = vgui.Create("DLabel", HeaderRow)
@@ -347,7 +347,7 @@ function GProfiler.Database.DoTab(Base, Outer)
 				ExplainRow:SetSize(innerW, rowH)
 				ExplainRow:SetPos(0, totalH)
 				ExplainRow.Paint = function(s, w, h)
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, i % 2 == 0 and Color(255, 255, 255, 5) or Color(255, 255, 255, 2))
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, i % 2 == 0 and Color(255, 255, 255, 5) or Color(255, 255, 255, 2))
 				end
 				for j, col in ipairs(Columns) do
 					local val = explain[col:lower():gsub(" ", "_")]
@@ -373,7 +373,7 @@ function GProfiler.Database.DoTab(Base, Outer)
 		local ProfHeader = vgui.Create("DPanel", InternalPanel)
 		ProfHeader:SetSize(profInnerW, rowH)
 		ProfHeader.Paint = function(s, w, h)
-			GProfiler.RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 10))
+			GProfiler.RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 10))
 		end
 		for i, col in ipairs(ProfColumns) do
 			local lbl = vgui.Create("DLabel", ProfHeader)
@@ -397,8 +397,8 @@ function GProfiler.Database.DoTab(Base, Outer)
 				ProfRow:SetSize(profInnerW, rowH)
 				ProfRow:SetPos(0, totalH)
 				ProfRow.Paint = function(s, w, h)
-					GProfiler.RNDX.Draw(0, 0, 0, w, h, i % 2 == 0 and Color(255, 255, 255, 5) or Color(255, 255, 255, 2))
-					GProfiler.RNDX.Draw(100, w - rowH - GProfiler.GetScaledSize(8), rowH / 4, rowH / 2, rowH / 2, statusColor)
+					GProfiler.RNDX.DrawScaled(0, 0, 0, w, h, i % 2 == 0 and Color(255, 255, 255, 5) or Color(255, 255, 255, 2))
+					GProfiler.RNDX.DrawScaled(100, w - rowH - GProfiler.GetScaledSize(8), rowH / 4, rowH / 2, rowH / 2, statusColor)
 				end
 				for j, val in ipairs(values) do
 					local lbl = vgui.Create("DLabel", ProfRow)

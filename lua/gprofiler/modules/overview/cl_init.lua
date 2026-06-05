@@ -58,9 +58,9 @@ local function StyleCombo(combo)
 	combo:SetTextColor(COL_TEXT)
 	combo:SetSortItems(false)
 	combo.Paint = function(s, w, h)
-		RNDX.Draw(4, 0, 0, w, h, COL_INPUT)
+		RNDX.DrawScaled(4, 0, 0, w, h, COL_INPUT)
 		if s:IsHovered() or s:IsMenuOpen() then
-			RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 12))
+			RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 12))
 		end
 		draw.SimpleText("▾", "GProfiler.Inter24", w - GProfiler.GetScaledSize(8), h / 2, COL_SUBTEXT, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 	end
@@ -95,16 +95,16 @@ function GProfiler.Overview.DoTab(Base, Outer)
 	local sbar = Scroll.VBar
 	sbar:SetWide(GProfiler.GetScaledSize(12))
 	sbar:SetHideButtons(true)
-	sbar.Paint = function(s, w, h) RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 10)) end
-	sbar.btnGrip.Paint = function(s, w, h) RNDX.Draw(4, 0, 0, w, h, Color(255, 255, 255, 20)) end
+	sbar.Paint = function(s, w, h) RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 10)) end
+	sbar.btnGrip.Paint = function(s, w, h) RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 255, 255, 20)) end
 
 	local function AddSection(title, first)
 		local Sec = vgui.Create("DPanel", Scroll)
 		Sec:Dock(TOP)
-		Sec:DockMargin(0, first and GProfiler.GetScaledSize(2) or GProfiler.GetScaledSize(24), 0, GProfiler.GetScaledSize(4))
+		Sec:DockMargin(0, first and GProfiler.GetScaledSize(2) or GProfiler.GetScaledSize(16), 0, GProfiler.GetScaledSize(4))
 		Sec:SetTall(GProfiler.GetScaledSize(36))
 		Sec.Paint = function(s, w, h)
-			RNDX.Draw(6, 0, 0, w, h, COL_HEADER)
+			RNDX.DrawScaled(6, 0, 0, w, h, COL_HEADER)
 			draw.SimpleText(title, "GProfiler.Inter28", GProfiler.GetScaledSize(12), h / 2, COL_TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 		return Sec
@@ -124,7 +124,7 @@ function GProfiler.Overview.DoTab(Base, Outer)
 	InfoCard:Dock(TOP)
 	InfoCard:SetTall(GProfiler.GetScaledSize(60))
 	InfoCard.Paint = function(s, w, h)
-		RNDX.Draw(6, 0, 0, w, h, COL_CARD)
+		RNDX.DrawScaled(6, 0, 0, w, h, COL_CARD)
 		local n = #infoRows
 		local cw = w / n
 		for i, row in ipairs(infoRows) do
@@ -140,10 +140,12 @@ function GProfiler.Overview.DoTab(Base, Outer)
 
 	AddSection("Graphs")
 
+	local GraphScale = function(h) return math.Round((h / 2160) * ScrH()) end
+
 	local function AddGraph(title)
 		local g = vgui.Create("GP.Graph", Scroll)
 		g:Dock(TOP)
-		g:SetTall(GProfiler.GetScaledSize(150))
+		g:SetTall(GraphScale(250))
 		g:DockMargin(0, 0, 0, pad)
 		g:SetTitle(title)
 		return g
@@ -177,7 +179,7 @@ function GProfiler.Overview.DoTab(Base, Outer)
 		Row:DockMargin(0, GProfiler.GetScaledSize(4), 0, 0)
 		Row:SetTall(GProfiler.GetScaledSize(44))
 		Row.Paint = function(s, w, h)
-			RNDX.Draw(4, 0, 0, w, h, COL_SUBTLE)
+			RNDX.DrawScaled(4, 0, 0, w, h, COL_SUBTLE)
 		end
 
 		local NameLabel = vgui.Create("DLabel", Row)

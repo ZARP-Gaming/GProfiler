@@ -33,7 +33,7 @@ function GProfiler.Menu:Open()
 	MenuBackground:SetMouseInputEnabled(false)
 	MenuBackground.Paint = function(s, w, h)
 		-- RNDX.DrawBlur(0, 0, w, h, nil, nil, nil, nil, nil, (ScrW() - (ScrW() * 0.79)) / 2)
-		RNDX.Draw(4, 0, 0, w, h, MenuColors.Black100) -- better than eating fps
+		RNDX.DrawScaled(4, 0, 0, w, h, MenuColors.Black100) -- better than eating fps
 	end
 	if GProfiler.Config.MenuCommands.Closekey then
 		MenuBackground.Think = function(s)
@@ -51,14 +51,14 @@ function GProfiler.Menu:Open()
 	Main:ShowCloseButton(false)
 	Main:SetTitle("")
 	Main:MakePopup()
-	Main.Paint = function(s, w, h) RNDX.Draw(4, 0, 0, w, h, Color(10, 32, 55, 255)) end
+	Main.Paint = function(s, w, h) RNDX.DrawScaled(4, 0, 0, w, h, Color(10, 32, 55, 255)) end
 	Main.OnClose = function() MenuBackground:Remove() end
 
 	local Header = vgui.Create("DPanel", Main)
 	Header:SetSize(Main:GetWide() - GProfiler.GetScaledSize(20), GProfiler.GetScaledSize(92))
 	Header:SetPos(GProfiler.GetScaledSize(10), GProfiler.GetScaledSize(10))
 	Header.Paint = function(s, w, h)
-		RNDX.Draw(4, 0, 0, w, h, Color(24, 45, 67, 255))
+		RNDX.DrawScaled(4, 0, 0, w, h, Color(24, 45, 67, 255))
 
 		surface.SetFont("GProfiler.HeaderTitle")
 		local TitleWidth, TitleHeight = surface.GetTextSize("GProfiler")
@@ -75,9 +75,9 @@ function GProfiler.Menu:Open()
 	CloseButton:SetTextColor(Color(255, 215, 215))
 	CloseButton:SetFont("GProfiler.HeaderTitle")
 	CloseButton.Paint = function(s, w, h)
-		RNDX.Draw(4, 0 ,0, w, h, Color(176, 64, 64))
+		RNDX.DrawScaled(4, 0 ,0, w, h, Color(176, 64, 64))
 		if s:IsHovered() then
-			RNDX.Draw(4, 0, 0, w, h, Color(255, 64, 64))
+			RNDX.DrawScaled(4, 0, 0, w, h, Color(255, 64, 64))
 		end
 	end
 	CloseButton.DoClick = function() Main:Close() end
@@ -102,12 +102,12 @@ function GProfiler.Menu:Open()
 	sbar:SetWide(GProfiler.GetScaledSize(12))
 	sbar:SetHideButtons(true)
 	sbar.Paint = function(s, w, h)
-		RNDX.Draw(4, 0, 0, w, h, MenuColors.ScrollBar)
+		RNDX.DrawScaled(4, 0, 0, w, h, MenuColors.ScrollBar)
 	end
 	sbar.btnGrip.Paint = function(s, w, h)
-		RNDX.Draw(4, 0, 0, w, h, MenuColors.ScrollBarGrip)
+		RNDX.DrawScaled(4, 0, 0, w, h, MenuColors.ScrollBarGrip)
 		if s:IsHovered() then
-			RNDX.Draw(4, 0, 0, w, h, MenuColors.ScrollBarGripOutline)
+			RNDX.DrawScaled(4, 0, 0, w, h, MenuColors.ScrollBarGripOutline)
 		end
 	end
 
@@ -123,11 +123,11 @@ function GProfiler.Menu:Open()
 		Tab:SetSize(Scroller:GetWide(), GProfiler.GetScaledSize(100))
 		Tab:SetText("")
 		Tab.Paint = function(s, w, h)
-			RNDX.Draw(4, 0, 0, w, h, Color(25, 60, 97, 255))
+			RNDX.DrawScaled(4, 0, 0, w, h, Color(25, 60, 97, 255))
 			if Menu.LastTab == k then
-				RNDX.Draw(4, 0, 0, w, h, Color(30, 90, 152, 255))
+				RNDX.DrawScaled(4, 0, 0, w, h, Color(30, 90, 152, 255))
 			elseif s:IsHovered() then
-				RNDX.Draw(4, 0, 0, w, h, Color(34, 77, 122, 255))
+				RNDX.DrawScaled(4, 0, 0, w, h, Color(34, 77, 122, 255))
 			end
 
 			surface.SetDrawColor(191, 237, 255, 255)
@@ -148,7 +148,7 @@ function GProfiler.Menu:Open()
 				local badgeX = w - badgeWidth - GProfiler.GetScaledSize(20)
 				local badgeY = h / 2 - badgeHeight / 2
 
-				RNDX.Draw(4, badgeX, badgeY, badgeWidth, badgeHeight, isActive and Color(36, 172, 82, 255) or Color(196, 79, 79))
+				RNDX.DrawScaled(4, badgeX, badgeY, badgeWidth, badgeHeight, isActive and Color(36, 172, 82, 255) or Color(196, 79, 79))
 				draw.SimpleText(time, "GProfiler.Menu.TabBadge", badgeX + badgeWidth / 2, badgeY + badgeHeight / 2, MenuColors.White, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			end
 		end
@@ -163,7 +163,7 @@ function GProfiler.Menu:Open()
 	local Content = vgui.Create("DPanel", ContentBase)
 	Content:SetSize(ContentBase:GetSize())
 	Content.Paint = function(s, w, h)
-		RNDX.Draw(8, 0, 0, w, h, Color(18, 48, 74, 255))
+		RNDX.DrawScaled(8, 0, 0, w, h, Color(18, 48, 74, 255))
 	end
 
 	Menu.Content = Content
@@ -242,17 +242,21 @@ if isstring(GProfiler.Config.MenuCommands.Console) then
 	concommand.Add(GProfiler.Config.MenuCommands.Console, Menu.Open)
 end
 
+local function InterScale(h) return math.Round((h / 2160) * ScrH()) end
 local function CreateFonts()
 	CachedSizes = {}
-	surface.CreateFont("GProfiler.HeaderTitle", { font = "Inter Bold", size = GProfiler.GetScaledSize(64), weight = 800, antialias = true })
-	surface.CreateFont("GProfiler.InnerTitle", { font = "Inter Bold", size = GProfiler.GetScaledSize(44), weight = 800, antialias = true })
-	surface.CreateFont("GProfiler.HeaderSubtitle", { font = "Inter", size = GProfiler.GetScaledSize(24), weight = 400, antialias = true })
-	surface.CreateFont("GProfiler.Menu.TabText", { font = "Inter Bold", size = GProfiler.GetScaledSize(38), weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Menu.TabBadge", { font = "Inter Bold", size = GProfiler.GetScaledSize(32), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.HeaderTitle", { font = "Inter Bold", size = InterScale(64), weight = 800, antialias = true })
+	surface.CreateFont("GProfiler.InnerTitle", { font = "Inter Bold", size = InterScale(44), weight = 800, antialias = true })
+	surface.CreateFont("GProfiler.HeaderSubtitle", { font = "Inter", size = InterScale(24), weight = 400, antialias = true })
+	surface.CreateFont("GProfiler.Menu.TabText", { font = "Inter Bold", size = InterScale(38), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Menu.TabBadge", { font = "Inter Bold", size = InterScale(32), weight = 500, antialias = true })
 	surface.CreateFont("GProfiler.Code", { font = "Roboto", size = GProfiler.GetScaledSize(22), weight = 500 })
-	surface.CreateFont("GProfiler.HeaderInteract", { font = "Inter", size = GProfiler.GetScaledSize(32), weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Inter24", { font = "Inter", size = GProfiler.GetScaledSize(24), weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Inter28", { font = "Inter", size = GProfiler.GetScaledSize(28), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.HeaderInteract", { font = "Inter", size = InterScale(32), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Inter24", { font = "Inter", size = InterScale(24), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Inter28", { font = "Inter", size = InterScale(28), weight = 500, antialias = true })
+
+	surface.CreateFont("GProfiler.Graph.Title", { font = "Inter", size = InterScale(26), weight = 500, antialias = true })
+	surface.CreateFont("GProfiler.Graph.Small", { font = "Inter", size = InterScale(20), weight = 500, antialias = true })
 end
 CreateFonts()
 hook.Add("OnScreenSizeChanged", "GProfiler.Menu.RescaleFonts", CreateFonts)
