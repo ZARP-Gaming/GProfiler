@@ -40,11 +40,11 @@ local incFuncs = {
 
 local function incFile(f)
 	(incFuncs[string.GetFileFromFilename(f):sub(1,2)] or incFuncs.sh)(f)
-	GProfiler.Log(string.format("Loaded file %s", f), 5)
+	GProfiler.Log(string.format(" - %s", f), 5)
 end
 
 local function incFolder(folder, subFileOnly, fileOnly)
-	GProfiler.Log(string.format("Loading folder %s", folder), 5)
+	GProfiler.Log(string.format("%s", folder), 5)
 
 	local files, folders = file.Find(folder.."/*", "LUA")
 	for _, f in SortedPairs(files, CLIENT) do incFile(string.format("%s/%s", folder, f)) end
