@@ -140,7 +140,7 @@ function GProfiler.Overview.DoTab(Base, Outer)
 
 	AddSection("Graphs")
 
-	local GraphScale = function(h) return math.Round((h / 2160) * ScrH()) end
+	local GraphScale = function(h) return math.Round(h * GProfiler.GetUIScale()) end
 
 	local function AddGraph(title)
 		local g = vgui.Create("GP.Graph", Scroll)

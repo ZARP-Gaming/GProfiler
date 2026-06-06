@@ -6,12 +6,16 @@ Menu.Background = Menu.Background or nil
 Menu.Content = Menu.Content or nil
 Menu.LastTab = Menu.LastTab or 1
 
+function GProfiler.GetUIScale()
+	local linear = math.min(ScrW() / 3840, ScrH() / 2160)
+	return linear ^ .85
+end
+
 local CachedSizes = {}
 function GProfiler.GetScaledSize(s)
 	if CachedSizes[s] then return CachedSizes[s] end
-	local scalingFactor = math.min(ScrW() / 3840, ScrH() / 2160)
-	CachedSizes[s] = s * scalingFactor
-	return s * scalingFactor
+	CachedSizes[s] = s * GProfiler.GetUIScale()
+	return CachedSizes[s]
 end
 
 local function GetTabName(tabName) return GProfiler.Language.GetPhrase(string.format("tab_%s", string.gsub(string.lower(tabName), " ", "_"))) end
@@ -242,7 +246,7 @@ if isstring(GProfiler.Config.MenuCommands.Console) then
 	concommand.Add(GProfiler.Config.MenuCommands.Console, Menu.Open)
 end
 
-local function InterScale(h) return math.Round((h / 2160) * ScrH()) end
+local function InterScale(h) return math.Round((h / 1920) * 2160 * GProfiler.GetUIScale()) end
 local function CreateFonts()
 	CachedSizes = {}
 	surface.CreateFont("GProfiler.HeaderTitle", { font = "Inter Bold", size = InterScale(64), weight = 800, antialias = true })
@@ -250,7 +254,7 @@ local function CreateFonts()
 	surface.CreateFont("GProfiler.HeaderSubtitle", { font = "Inter", size = InterScale(24), weight = 400, antialias = true })
 	surface.CreateFont("GProfiler.Menu.TabText", { font = "Inter Bold", size = InterScale(38), weight = 500, antialias = true })
 	surface.CreateFont("GProfiler.Menu.TabBadge", { font = "Inter Bold", size = InterScale(32), weight = 500, antialias = true })
-	surface.CreateFont("GProfiler.Code", { font = "Roboto", size = GProfiler.GetScaledSize(22), weight = 500 })
+	surface.CreateFont("GProfiler.Code", { font = "Inter", size = InterScale(24), weight = 500 })
 	surface.CreateFont("GProfiler.HeaderInteract", { font = "Inter", size = InterScale(32), weight = 500, antialias = true })
 	surface.CreateFont("GProfiler.Inter24", { font = "Inter", size = InterScale(24), weight = 500, antialias = true })
 	surface.CreateFont("GProfiler.Inter28", { font = "Inter", size = InterScale(28), weight = 500, antialias = true })
