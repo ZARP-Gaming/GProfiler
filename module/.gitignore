@@ -1,0 +1,10 @@
+projects/
+*.dll
+*.so
+*.pdb
+*.lib
+*.exp
+*.obj
+*.o
+*.exe
+.vs/

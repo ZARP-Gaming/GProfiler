@@ -1,6 +1,7 @@
 GProfiler.Utils = GProfiler.Utils or {}
 
-function GProfiler.ExpressAvailable() return !!((express and express.shSend) and GProfiler.Config.UseExpressNetworking) end
+-- function GProfiler.ExpressAvailable() return !!((express and express.shSend) and GProfiler.Config.UseExpressNetworking) end
+function GProfiler.ExpressAvailable() return false end -- V2 TODO
 
 if SERVER then
 	util.AddNetworkString("GProfiler_RequestFunctionSource")
@@ -66,6 +67,28 @@ end
 
 local function GetTabName(tabName) return GProfiler.Language.GetPhrase(string.format("tab_%s", string.gsub(string.lower(tabName), " ", "_"))) end
 
+function GProfiler.Utils.StyleMenu(menu)
+	menu:SetDrawBorder(false)
+	menu:SetPaintBackground(false)
+	menu.Paint = function(s, w, h)
+		GProfiler.RNDX.DrawScaled(6, 0, 0, w, h, Color(18, 46, 74, 255))
+	end
+
+	local items = menu.GetCanvas and menu:GetCanvas():GetChildren() or menu:GetChildren()
+	for _, item in ipairs(items) do
+		if item.SetTextColor then
+			item:SetTextColor(color_white)
+			item:SetFont("GProfiler.Inter24")
+			item.Paint = function(s, w, h)
+				if s:IsHovered() then
+					GProfiler.RNDX.DrawScaled(4, GProfiler.GetScaledSize(2), GProfiler.GetScaledSize(1), w - GProfiler.GetScaledSize(4), h - GProfiler.GetScaledSize(2), Color(31, 79, 128, 255))
+				end
+				s:SetTextColor(color_white)
+			end
+		end
+	end
+end
+
 function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 	local Header = vgui.Create("DPanel", Outer)
 	Header:SetSize(Outer:GetWide(), GProfiler.GetScaledSize(Sub and 50 or 100))
@@ -104,7 +127,7 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 	local ItemsXOffset = Header:GetWide() - GProfiler.GetScaledSize(20)
 	local RNDX = GProfiler.RNDX
 
-	local Button, Selector, Timer
+	local Button, Selector, Timer, Mode
 
 	function Header:SetupStartStop(state)
 		local ButtonW = GProfiler.GetScaledSize(155)
@@ -146,11 +169,12 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		return Button
 	end
 
-	function Header:SetupRealmSelector(currentState, includeBoth)
+	function Header:SetupRealmSelector(currentState, includeBoth, disabled)
 		if isbool(currentState) then
 			currentState = currentState and "Client" or "Server"
 		end
 		currentState = currentState or "Client"
+		disabled = disabled or {}
 
 		local Items = {"Client", "Server"}
 		if includeBoth then table.insert(Items, "Both") end
@@ -190,16 +214,19 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		local ItemW = Selector:GetWide() / numItems
 
 		for i, item in ipairs(Items) do
+			local isDisabled = disabled[item] == true
+
 			local Button = vgui.Create("DButton", Selector)
 			Button:SetSize(ItemW, Selector:GetTall())
 			Button:SetPos((i - 1) * ItemW, 0)
 			Button:SetText(item)
 			Button:SetFont("GProfiler.HeaderInteract")
-			Button:SetTextColor(color_white)
+			Button:SetTextColor(isDisabled and Color(120, 140, 165) or color_white)
+			Button:SetCursor(isDisabled and "no" or "hand")
 			Button.Paint = nil
 
 			Button.DoClick = function()
-				if not Selector.Enabled then return end
+				if not Selector.Enabled or isDisabled then return end
 
 				Selector.LerpTo = (i - 1) / math.max(1, numItems - 1)
 				Selector.State = item
@@ -235,6 +262,43 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		return Timer
 	end
 
+	function Header:SetupModeSelector(getValue, onSelect, options)
+		local Width = GProfiler.GetScaledSize(170)
+		local Height = Header:GetTall() * 0.65
+
+		ItemsXOffset = ItemsXOffset - Width - GProfiler.GetScaledSize(10)
+
+		Mode = vgui.Create("DButton", Header)
+		Mode:SetSize(Width, Height)
+		Mode:SetPos(ItemsXOffset, Header:GetTall() / 2 - Height / 2)
+		Mode:SetText("")
+		Mode.Paint = function(s, w, h)
+			RNDX.DrawScaled(6, 0, 0, w, h, Color(18, 46, 74, 255))
+			if s:IsHovered() then
+				RNDX.DrawScaled(6, 0, 0, w, h, Color(0, 0, 0, 50))
+			end
+
+			local label = "?"
+			local cur = getValue()
+			for _, o in ipairs(options) do
+				if o.value == cur then label = o.label break end
+			end
+
+			draw.SimpleText(label, "GProfiler.HeaderInteract", GProfiler.GetScaledSize(12), h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("▾", "GProfiler.HeaderInteract", w - GProfiler.GetScaledSize(12), h / 2, color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+		end
+		Mode.DoClick = function()
+			local menu = DermaMenu()
+			for _, o in ipairs(options) do
+				menu:AddOption(o.label .. " - " .. o.desc, function() onSelect(o.value) end)
+			end
+			GProfiler.Utils.StyleMenu(menu)
+			menu:Open()
+		end
+
+		return Mode
+	end
+
 	Header.OnHandleMoved = function()
 		ItemsXOffset = Header:GetWide() - GProfiler.GetScaledSize(20)
 		if Button then
@@ -244,6 +308,10 @@ function GProfiler.Utils.SetupHeader(Outer, Title, Icon, Sub)
 		if Selector then
 			Selector:SetPos(ItemsXOffset - Selector:GetWide(), Selector:GetY())
 			ItemsXOffset = ItemsXOffset - Selector:GetWide() - GProfiler.GetScaledSize(10)
+		end
+		if Mode then
+			Mode:SetPos(ItemsXOffset - Mode:GetWide(), Mode:GetY())
+			ItemsXOffset = ItemsXOffset - Mode:GetWide() - GProfiler.GetScaledSize(10)
 		end
 		if Timer then
 			Timer:SetPos(ItemsXOffset - Timer:GetWide() - GProfiler.GetScaledSize(10), Timer:GetY())

@@ -1,7 +1,6 @@
 GProfiler.Version = "2.0.0a"
 
--- Available languages: english, french, german, dutch, russian, italian, turkish
--- Some languages may only have partial support.
+-- Available languages: english
 GProfiler.Config.Language = "english"
 
 -- Enable/Disable Log Types

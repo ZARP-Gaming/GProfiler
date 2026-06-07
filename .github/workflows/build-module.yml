@@ -1,0 +1,63 @@
+name: Build & Release Module
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone garrysmod_common
+        run: |
+          git clone --branch x86-64-support-sourcesdk --recurse-submodules --depth 1 `
+            https://github.com/danielga/garrysmod_common.git module/garrysmod_common
+
+      - name: Download premake
+        run: |
+          Invoke-WebRequest `
+            -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" `
+            -OutFile premake.zip
+          Expand-Archive -Path premake.zip -DestinationPath premake -Force
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Generate project files
+        working-directory: module
+        run: ..\premake\premake5.exe --gmcommon=garrysmod_common vs2022
+
+      - name: Build
+        run: |
+          $sln = Get-ChildItem -Path module/projects -Recurse -Filter *.sln | Select-Object -First 1
+          if (-not $sln) { throw "No solution file found" }
+          msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64 /m
+
+      - name: Collect binaries
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $dlls = Get-ChildItem -Path module -Recurse -Include gmsv_gprofiler_win64.dll,gmcl_gprofiler_win64.dll
+          if ($dlls.Count -eq 0) { throw "No built DLLs found" }
+          $dlls | ForEach-Object { Copy-Item $_.FullName -Destination dist }
+          Get-ChildItem dist
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.version }}
+          files: dist/*.dll

@@ -12,6 +12,7 @@
 	- [Entity Variables](#-entity-variables-profiler)
 	- [Network Variables](#-network-variables-profiler)
 	- [Database](#️-database-profiler)
+	- [JIT](#-jit-profiler)
 - [Configuration](#-configuration)
 
 ---
@@ -106,6 +107,18 @@ You can set a list of functions to limit the profiling results to, making it eas
 
 > [!NOTE]
 > Both of the above is only available for databases running through MySQL, and all data is provided by MySQL
+
+---
+
+### 🔥 JIT Profiler
+
+<p align="center">
+	<img src=".github/images/jitprofiler.png" alt="JIT profiler" width="800">
+</p>
+
+> [!NOTE]
+> The JIT Profiler requires the `gprofiler` binary module, which you can download here: TODO
+> The module is currently only built for windows.
 
 ---
 

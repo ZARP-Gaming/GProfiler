@@ -31,8 +31,9 @@ local operators = {
 
 local function InsertColor(richText, col) richText:InsertColorChange(col.r, col.g, col.b, col.a) end
 
-function GProfiler.SyntaxHighlight(richText, code, startLine)
+function GProfiler.SyntaxHighlight(richText, code, startLine, highlightLine)
 	local colors = GProfiler.SyntaxColors
+	local highlight = Color(255, 214, 90)
 	richText:SetText("")
 	local i = 1
 	local len = #code
@@ -47,7 +48,8 @@ function GProfiler.SyntaxHighlight(richText, code, startLine)
 	local lineNum = startLine or 1
 
 	local function EmitLineNumber()
-		InsertColor(richText, colors.lineNumber)
+		local isHL = highlightLine and lineNum == highlightLine
+		InsertColor(richText, isHL and highlight or colors.lineNumber)
 		local numStr = string.rep(" ", padWidth - #tostring(lineNum)) .. tostring(lineNum)
 		richText:AppendText(numStr)
 		InsertColor(richText, colors.lineSep)
