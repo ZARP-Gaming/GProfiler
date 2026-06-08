@@ -55,9 +55,18 @@ jobs:
           $dlls | ForEach-Object { Copy-Item $_.FullName -Destination dist }
           Get-ChildItem dist
 
+      - name: Package addon
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $zip = "dist/GProfiler-${{ inputs.version }}.zip"
+          Compress-Archive -Path lua,materials,resource -DestinationPath $zip -Force
+          Get-ChildItem dist
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
           name: ${{ inputs.version }}
-          files: dist/*.dll
+          files: |
+            dist/*.dll
+            dist/*.zip
