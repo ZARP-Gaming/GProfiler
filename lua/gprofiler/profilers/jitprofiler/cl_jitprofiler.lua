@@ -191,24 +191,27 @@ function GProfiler.JIT.DoTab(Base, Outer)
 	end)
 
 	local Bar = vgui.Create("DPanel", Outer)
-	Bar:SetSize(Outer:GetWide(), GProfiler.GetScaledSize(40))
+	Bar:SetSize(Outer:GetWide(), GProfiler.GetScaledSize(46))
 	Bar:SetPos(0, Header:GetTall())
 	Bar.Paint = function(s, w, h)
 		GProfiler.RNDX.Draw(0, 0, 0, w, h, Color(22, 50, 80, 200))
 	end
 
 	local viewButtons = {}
+	local viewCounts = {}
+	local LayoutBar
 	local function RefreshResults() end
 
-	local function MakeViewButton(label, x)
+	local function MakeViewButton(label)
 		local btn = vgui.Create("DButton", Bar)
-		btn:SetSize(GProfiler.GetScaledSize(90), GProfiler.GetScaledSize(26))
-		btn:SetPos(x, Bar:GetTall() / 2 - GProfiler.GetScaledSize(26) / 2)
+		btn.Label = label
+		btn:SetTall(GProfiler.GetScaledSize(28))
 		btn:SetText("")
 		btn.Paint = function(s, w, h)
 			local active = JIT.View == label
 			GProfiler.RNDX.Draw(4, 0, 0, w, h, active and Color(31, 79, 128, 255) or Color(18, 46, 74, 255))
-			draw.SimpleText(label, "GProfiler.Inter24", w / 2, h / 2, active and color_white or Color(160, 185, 215), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			GProfiler.RNDX.DrawOutlined(4, 0, 0, w, h, Color(255, 255, 255, 1), 1)
+			draw.SimpleText(string.format("%s (%d)", label, viewCounts[label] or 0), "GProfiler.Inter24", w / 2, h / 2, active and color_white or Color(160, 185, 215), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 		btn.DoClick = function()
 			JIT.View = label
@@ -219,17 +222,17 @@ function GProfiler.JIT.DoTab(Base, Outer)
 	end
 
 	local vx = GProfiler.GetScaledSize(10)
-	MakeViewButton("Self", vx)
-	MakeViewButton("Inclusive", vx + GProfiler.GetScaledSize(96))
-	MakeViewButton("Call Tree", vx + GProfiler.GetScaledSize(192))
-	MakeViewButton("By State", vx + GProfiler.GetScaledSize(288))
+	MakeViewButton("Self")
+	MakeViewButton("Inclusive")
+	MakeViewButton("Call Tree")
+	MakeViewButton("By State")
 
 	local intLbl = vgui.Create("DLabel", Bar)
 	intLbl:SetFont("GProfiler.Inter24")
 	intLbl:SetTextColor(color_white)
 	intLbl:SetText("Sample every")
 	intLbl:SizeToContents()
-	intLbl:SetPos(vx + GProfiler.GetScaledSize(400), Bar:GetTall() / 2 - intLbl:GetTall() / 2)
+	intLbl:SetPos(vx + GProfiler.GetScaledSize(500), Bar:GetTall() / 2 - intLbl:GetTall() / 2)
 
 	local intInput = vgui.Create("DTextEntry", Bar)
 	intInput:SetSize(GProfiler.GetScaledSize(50), GProfiler.GetScaledSize(26))
@@ -258,6 +261,26 @@ function GProfiler.JIT.DoTab(Base, Outer)
 		intInput:SetText(tostring(JIT.Interval))
 		SendMode()
 	end
+
+	LayoutBar = function()
+		surface.SetFont("GProfiler.Inter24")
+		local btnH = GProfiler.GetScaledSize(28)
+		local x = vx
+		for _, b in ipairs(viewButtons) do
+			local tw = surface.GetTextSize(string.format("%s (%d)", b.Label, viewCounts[b.Label] or 0))
+			local bw = tw + GProfiler.GetScaledSize(24)
+			b:SetSize(bw, btnH)
+			b:SetPos(x, Bar:GetTall() / 2 - btnH / 2)
+			x = x + bw + GProfiler.GetScaledSize(8)
+		end
+
+		x = x + GProfiler.GetScaledSize(20)
+		intLbl:SetPos(x, Bar:GetTall() / 2 - intLbl:GetTall() / 2)
+		intInput:SetPos(intLbl:GetX() + intLbl:GetWide() + GProfiler.GetScaledSize(6), Bar:GetTall() / 2 - intInput:GetTall() / 2)
+		msLbl:SetPos(intInput:GetX() + intInput:GetWide() + GProfiler.GetScaledSize(6), Bar:GetTall() / 2 - msLbl:GetTall() / 2)
+		hintLbl:SetPos(msLbl:GetX() + msLbl:GetWide() + GProfiler.GetScaledSize(10), Bar:GetTall() / 2 - hintLbl:GetTall() / 2)
+	end
+	LayoutBar()
 
 	local contentY = Header:GetTall() + Bar:GetTall() + GProfiler.GetScaledSize(12)
 	Base:SetPos(GProfiler.GetScaledSize(10), contentY)
@@ -687,6 +710,13 @@ function GProfiler.JIT.DoTab(Base, Outer)
 			end
 			return
 		end
+
+		local map = GetSamplesMap(GetStoreData())
+		viewCounts["Self"] = table.Count(BuildSelf(map))
+		viewCounts["Inclusive"] = table.Count(BuildInclusive(map))
+		viewCounts["Call Tree"] = table.Count(BuildTree(map).children)
+		viewCounts["By State"] = table.Count((BuildByState(map)))
+		if LayoutBar then LayoutBar() end
 		if JIT.View == "Self" then
 			BuildList(BuildSelf, "Self %")
 		elseif JIT.View == "Inclusive" then
@@ -702,7 +732,7 @@ function GProfiler.JIT.DoTab(Base, Outer)
 	timer.Simple(0, RefreshResults)
 end
 
-GProfiler.Menu.RegisterTab("JIT Profiler", "gprofiler/functions.png", 9, GProfiler.JIT.DoTab, function()
+GProfiler.Menu.RegisterTab("JIT Profiler", "gprofiler/functions.png", 10, GProfiler.JIT.DoTab, function()
 	local timer = JITStore:GetTimerData(JIT.Realm)
 	if timer.StartTime == 0 then return end
 	return GProfiler.TimeRunning(timer.StartTime, timer.EndTime, timer.ProfileActive), timer.ProfileActive
