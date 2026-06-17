@@ -1,4 +1,4 @@
-GProfiler.Version = "2.0.0a"
+GProfiler.Version = "2.0.0"
 
 -- Available languages: english
 GProfiler.Config.Language = "english"
