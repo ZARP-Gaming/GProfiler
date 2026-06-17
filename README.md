@@ -126,7 +126,9 @@ You can set a list of functions to limit the profiling results to, making it eas
 </p>
 
 > [!NOTE]
-> The JIT Profiler requires the `gprofiler` binary module, which you can download here: TODO
+> The JIT Profiler requires the `gprofiler` binary module, which you can download here: https://github.com/ZARP-Gaming/GProfiler/releases/latest
+
+> [!NOTE]
 > The module is currently only built for windows.
 
 ---
