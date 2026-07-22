@@ -13,8 +13,7 @@ local math = math
 
 local chunkSizeLimit = 90000
 
-local recurse = {}
-local startTimes = {}
+local callStack = {}
 local IgnoreCache = {}
 local functionNames = {}
 local mostExpensiveCalls = {}
@@ -116,7 +115,21 @@ local function CombineDuplicates()
 	FunctionsProfiler.ProfileData = combined
 end
 
-local function handleFunction(event)
+local function timingFinalize(frame)
+	if frame.finalized then return end
+	frame.finalized = true
+
+	local funcTable = frame.funcTable
+	if not funcTable then return end
+
+	local runTime = SysTime() - frame.start
+	funcTable.time = funcTable.time + runTime
+	funcTable.average = funcTable.calls > 0 and (funcTable.time / funcTable.calls) or 0
+
+	updateBottleneck(frame.func, runTime, funcTable.name, funcTable.source, funcTable.lines)
+end
+
+local function handleFunction(event, parent)
 	local func = event.func
 
 	if IgnoreCache[func] or Find(event.short_src, "/lua/gprofiler/", 1, true) then IgnoreCache[func] = true return end
@@ -128,49 +141,52 @@ local function handleFunction(event)
 		functionNames[func] = { name = event.name, namewhat = event.namewhat }
 	end
 
-	if not recurse[func] then recurse[func] = 0 end
-	recurse[func] = recurse[func] + 1
-
-	startTimes[func] = SysTime() 
-end
-
-local function handleReturn(event)
-	local func = event.func
-	if not startTimes[func] then return end
-
-	if FunctionsProfiler.Focus and not FunctionsProfiler.Focus[tostring(func)] then
-		recurse[func] = recurse[func] - 1
-		if recurse[func] == 0 then recurse[func] = nil end
-		return
-	end
-
-	local runTime = SysTime() - startTimes[func]
-
-	local funcTable = FunctionsProfiler.ProfileData[func]
-	if not funcTable then
-		FunctionsProfiler.ProfileData[func] = {
-			name = buildDisplayName(func, functionNames[func]),
-			source = event.short_src,
-			lines = event.linedefined .. " - " .. event.lastlinedefined,
-			calls = 0, time = 0, average = 0,
-			focus = Replace(tostring(func), "function: ", "")
-		}
-		funcTable = FunctionsProfiler.ProfileData[func]
+	if parent then
+		while #callStack > 0 and callStack[#callStack].func ~= parent do
+			local f = callStack[#callStack]
+			callStack[#callStack] = nil
+			timingFinalize(f)
+		end
 	else
-		local fname = functionNames[func]
-		if fname and (namewhatPriority[fname.namewhat] or 0) > 0 then
-			funcTable.name = buildDisplayName(func, fname)
+		while #callStack > 0 do
+			local f = callStack[#callStack]
+			callStack[#callStack] = nil
+			timingFinalize(f)
 		end
 	end
 
-	funcTable.time = funcTable.time + runTime
-	funcTable.calls = funcTable.calls + 1
-	funcTable.average = funcTable.time / funcTable.calls
+	local funcTable
+	if not (FunctionsProfiler.Focus and not FunctionsProfiler.Focus[tostring(func)]) then
+		funcTable = FunctionsProfiler.ProfileData[func]
+		if not funcTable then
+			funcTable = {
+				name = buildDisplayName(func, functionNames[func]),
+				source = event.short_src,
+				lines = event.linedefined .. " - " .. event.lastlinedefined,
+				calls = 0, time = 0, average = 0,
+				focus = Replace(tostring(func), "function: ", "")
+			}
+			FunctionsProfiler.ProfileData[func] = funcTable
+		else
+			local fname = functionNames[func]
+			if fname and (namewhatPriority[fname.namewhat] or 0) > 0 then
+				funcTable.name = buildDisplayName(func, fname)
+			end
+		end
 
-	updateBottleneck(func, runTime, funcTable.name, funcTable.source, funcTable.lines)
+		funcTable.calls = funcTable.calls + 1
+		funcTable.average = funcTable.calls > 0 and (funcTable.time / funcTable.calls) or 0
+	end
 
-	recurse[func] = recurse[func] - 1
-	if recurse[func] == 0 then recurse[func] = nil end
+	callStack[#callStack + 1] = { func = func, start = SysTime(), funcTable = funcTable }
+end
+
+local function handleReturn(func)
+	local top = callStack[#callStack]
+	if top and top.func == func then
+		callStack[#callStack] = nil
+		timingFinalize(top)
+	end
 end
 
 local function cgFinalize(frame)
@@ -225,14 +241,12 @@ local function cgOnReturn(func)
 end
 
 local function onEvent(event)
-	local info = GetInfo(3, "fSn")
+	local info = GetInfo(2, "fSn")
 	if not info then return end
 
 	if event == "call" then
-		handleFunction(info)
-
 		local parent
-		for level = 4, 24 do
+		for level = 3, 24 do
 			local pi = GetInfo(level, "fS")
 			if not pi then break end
 			if pi.what ~= "C" and pi.func and not IgnoreCache[pi.func] then
@@ -241,13 +255,11 @@ local function onEvent(event)
 			end
 		end
 
+		handleFunction(info, parent)
 		cgOnCall(info.func, parent, info)
 	else
 		cgOnReturn(info.func)
-
-		local func = info.func
-		if not recurse[func] or recurse[func] == 0 then return end
-		handleReturn(info)
+		handleReturn(info.func)
 	end
 end
 
@@ -258,8 +270,7 @@ local function StartDetour()
 	FunctionsProfiler.ProfileData = {}
 	FunctionsProfiler.IsDetoured = true
 
-	recurse = {}
-	startTimes = {}
+	callStack = {}
 	IgnoreCache = {}
 	functionNames = {}
 	cgStack = {}
@@ -312,10 +323,15 @@ end
 local function StopDetour()
 	if not FunctionsProfiler.IsDetoured then return end
 
-	GProfiler.Log((SERVER and "Server" or "Client") .. " function profile stopped!", 2)
+	debug.sethook()
+	while #callStack > 0 do
+		local f = callStack[#callStack]
+		callStack[#callStack] = nil
+		timingFinalize(f)
+	end
 	FunctionsProfiler.IsDetoured = false
 
-	debug.sethook()
+	GProfiler.Log((SERVER and "Server" or "Client") .. " function profile stopped!", 2)
 
 	while #cgStack > 0 do
 		local f = cgStack[#cgStack]
