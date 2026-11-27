@@ -86,7 +86,7 @@ function GProfiler.Hooks.DoTab(Base, Outer)
 		ResultsList:Clear()
 
 		for k, v in pairs(realmData) do
-			local row = ResultsList:AddLine(string.format("%s (%s)", v.r, v.h), v.c, v.t, v.c > 0 and v.t / v.c or 0, v.t)
+			local row = ResultsList:AddLine(string.format("%s (%s)", v.r, v.h), v.c, v.t, v.c > 0 and v.t / v.c or 0, v.l or 0)
 			row.HookData = v
 		end
 	end
@@ -260,6 +260,7 @@ net.Receive("GProfiler_Hooks_SendData", function()
 			h = net.ReadString(),
 			c = net.ReadUInt(32),
 			t = net.ReadFloat(),
+			l = net.ReadFloat(),
 			Source = net.ReadString(),
 			Lines = {net.ReadUInt(16), net.ReadUInt(16)}
 		})

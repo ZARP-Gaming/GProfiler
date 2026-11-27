@@ -45,6 +45,7 @@ local function StartDetour()
 
 			hookTbl.c = hookTbl.c + 1
 			hookTbl.t = hookTbl.t + deltaTime
+			if deltaTime > (hookTbl.l or 0) then hookTbl.l = deltaTime end
 
 			return a, b, c, d, e, f
 		end, ...)
@@ -105,6 +106,7 @@ local function SendData(ply)
 			net.WriteString(v.h)
 			net.WriteUInt(tonumber(v.c) or 0, 32)
 			net.WriteFloat(tonumber(v.t) or 0)
+			net.WriteFloat(tonumber(v.l) or 0)
 			net.WriteString(v.Source or "")
 			net.WriteUInt(v.Lines and v.Lines[1] or 0, 16)
 			net.WriteUInt(v.Lines and v.Lines[2] or 0, 16)
