@@ -11,7 +11,7 @@ GProfiler.Profilers.Register("Timers", {})
 local chunkSizeLimit = 65535
 
 function Timers:StartProfiler(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) then return end
+	if not GProfiler.Access.HasAccess(ply or (CLIENT and LocalPlayer() or nil)) then return end
 
 	if Timers.IsDetoured then return end
 
@@ -23,7 +23,7 @@ function Timers:StartProfiler(ply)
 end
 
 function Timers:Stop(ply)
-	if not GProfiler.Access.HasAccess(ply or LocalPlayer()) then return end
+	if not GProfiler.Access.HasAccess(ply or (CLIENT and LocalPlayer() or nil)) then return end
 
 	if not Timers.IsDetoured then return end
 
@@ -33,7 +33,7 @@ end
 
 local function SendData(ply)
 	if SERVER then
-		local ProfileData = table.Merge(Timers.Simple, Timers.Create)
+		local ProfileData = table.Merge(table.Copy(Timers.Simple or {}), Timers.Create or {})
 		local chunkCount = 1
 		local currentChunkSize = 0
 		local chunks = {}

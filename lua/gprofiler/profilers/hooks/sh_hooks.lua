@@ -90,8 +90,7 @@ local function SendData(ply)
 	if GProfiler.ExpressAvailable() and Count > GProfiler.Config.ExpressMinimumResults - 1 and Count > 0 then
 		local Data = {}
 		for k, v in pairs(HooksProfiler.ProfileData) do
-			Data[k] = v
-			v.f = nil
+			Data[k] = { h = v.h, r = v.r, c = v.c, t = v.t, l = v.l, Source = v.Source, Lines = v.Lines, FullSource = v.FullSource }
 		end
 
 		express.Send("GProfiler_Hooks_SendData", Data, ply)
